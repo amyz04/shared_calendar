@@ -1,0 +1,21 @@
+{
+  "name": "shared-calendar",
+  "version": "1.0.0",
+  "description": "A shared group calendar app for matching free days and planning itineraries.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/belxz/shared-calendar.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/belxz/shared-calendar/issues"
+  },
+  "homepage": "https://github.com/belxz/shared-calendar#readme"
+}
