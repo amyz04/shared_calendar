@@ -3,7 +3,6 @@ package com.calendarapp.backend.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -24,7 +23,7 @@ public class Calendar {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(nullable = false)
+    @Column(name = "calendar_name", nullable = false)
     private String name;
 
     @Enumerated(EnumType.STRING)

@@ -3,7 +3,6 @@ package com.calendarapp.backend.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -23,7 +22,7 @@ public class Itinerary {
     @Column
     private String notes;
 
-    @Column
+    @Column(name = "day_number")
     private int dayNumber;
 
     @Column(name = "created_at", updatable = false)
