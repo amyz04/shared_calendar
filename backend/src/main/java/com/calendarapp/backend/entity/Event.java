@@ -44,13 +44,13 @@ public class Event {
     private String description;
 
     @Column(name = "start_time", nullable = false)
-    private LocalTime startTime;
+    private LocalDateTime startTime;
 
     @Column(name = "end_time", nullable = false)
-    private LocalTime endTime;
+    private LocalDateTime endTime;
 
     @Column(nullable = false)
-    private LocalDate date;
+    private LocalDateTime date;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
