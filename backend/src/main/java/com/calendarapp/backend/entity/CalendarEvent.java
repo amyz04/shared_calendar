@@ -16,6 +16,7 @@ public class CalendarEvent {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "calendar_id", nullable = false)
     private Calendar calendar;
 
