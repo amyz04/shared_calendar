@@ -3,9 +3,8 @@ package com.calendarapp.backend.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
+
 
 @Entity
 @Table(name = "events")
@@ -32,7 +31,7 @@ public class Event {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by", nullable = false)
-    private String createdBy; 
+    private User createdBy;
 
     @Column (name = "event_name", nullable = false)
     private String name;
