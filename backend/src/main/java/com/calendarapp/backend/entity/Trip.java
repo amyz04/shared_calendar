@@ -12,7 +12,6 @@ import java.util.List;
 @Table(name = "trips")
 @Getter
 @Setter
-
 public class Trip {
 
     public enum Status {
@@ -26,17 +25,18 @@ public class Trip {
     @Column(nullable = false)
     private String name;
 
+    @Column(name = "invite_token", unique = true)
+    private String inviteToken;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id", nullable = false)
     private User owner;
 
-    @ManyToMany
-    @JoinTable(name = "trip_pending_members", joinColumns = @JoinColumn(name = "trip_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
-    private List<User> pendingMembers = new ArrayList<>();
+    @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<TripMember> members = new ArrayList<>();
 
-    @ManyToMany
-    @JoinTable(name = "trip_confirmed_members", joinColumns = @JoinColumn(name = "trip_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
-    private List<User> confirmedMembers = new ArrayList<>();
+    @OneToOne(mappedBy = "trip", cascade = CascadeType.ALL)
+    private Itinerary itinerary;
 
     @Column(name = "start_date", nullable = false)
     private LocalDate startDate;
@@ -44,7 +44,6 @@ public class Trip {
     @Column(name = "end_date", nullable = false)
     private LocalDate endDate;
 
-    @Column(nullable = true)
     private String details;
 
     @Enumerated(EnumType.STRING)
