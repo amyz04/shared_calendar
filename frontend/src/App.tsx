@@ -93,6 +93,7 @@ export default function App() {
         />
 
         <main style={{ flex: 1, overflowY: "auto", padding: "32px 36px", background: T.bgAlt }}>
+          {/* Top status bar — no New trip button here */}
           <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 32, gap: 10 }}>
             {isGuest && (
               <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 20, background: `${T.amber}15`, border: `1px solid ${T.amber}40`, fontSize: 11, color: T.amber, fontFamily: "'Syne',sans-serif" }}>
@@ -104,12 +105,6 @@ export default function App() {
               <div style={{ width: 6, height: 6, borderRadius: "50%", background: T.green }} />
               Spring Boot · connected
             </div>
-            {!isGuest && (
-              <button onClick={() => setShowModal(true)} style={{ display: "flex", alignItems: "center", gap: 7, padding: "8px 16px", borderRadius: 9, background: T.violet, border: "none", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'Syne',sans-serif" }}>
-                <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
-                New trip
-              </button>
-            )}
           </div>
 
           {view === "trips" && (
