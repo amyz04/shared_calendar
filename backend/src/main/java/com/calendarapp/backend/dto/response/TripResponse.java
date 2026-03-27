@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import java.time.LocalDate;
 import java.util.List;
+import java.time.LocalDateTime;
 
 @Getter
 @AllArgsConstructor
@@ -16,5 +17,5 @@ public class TripResponse {
     private LocalDate startDate;
     private LocalDate endDate;
     private String status;
-    private String createdAt;
+    private LocalDateTime createdAt;
 }

@@ -13,5 +13,5 @@ public class CalendarEventResponse {
     private String title;
     private LocalDateTime startDateTime;
     private LocalDateTime endDateTime;
-    private String createdAt;
+    private LocalDateTime createdAt;
 }

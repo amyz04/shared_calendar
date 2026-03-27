@@ -4,6 +4,8 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
+import java.time.LocalDate;
+
 
 @Getter
 public class RegisterRequest{
@@ -21,6 +23,6 @@ public class RegisterRequest{
     @Size(min = 8, message = "Password must be at least 8 characters")
     private String password;
 
-    private String dateOfBirth;
+    private LocalDate dateOfBirth;
     private String avatarColor;
 }
