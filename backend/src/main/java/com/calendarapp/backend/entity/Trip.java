@@ -25,6 +25,11 @@ public class Trip {
     @Column(nullable = false)
     private String name;
 
+    @Column(nullable = false)
+    private String destination;
+
+    private String cover;
+
     @Column(name = "invite_token", unique = true)
     private String inviteToken;
 

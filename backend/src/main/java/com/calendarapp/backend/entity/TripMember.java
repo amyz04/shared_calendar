@@ -4,8 +4,6 @@ import lombok.Getter;
 import lombok.Setter;
 import java.time.LocalDateTime;
 
-import org.springframework.cglib.core.Local;
-
 @Entity
 @Table(name = "trip_members")
 @Getter
