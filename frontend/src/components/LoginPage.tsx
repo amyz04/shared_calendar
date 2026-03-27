@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { Theme } from "../theme";
-import { ThemeToggle } from "./ui";
+import { ThemeToggle } from "./UI";
 
 interface LoginPageProps {
   T: Theme;

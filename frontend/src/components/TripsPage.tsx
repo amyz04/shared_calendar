@@ -1,6 +1,6 @@
 import type { Trip, Friend, NavId } from "../types";
 import type { Theme } from "../theme";
-import { Avatar, Pill, LockedBtn } from "./ui";
+import { Avatar, Pill, LockedBtn } from "./UI";
 import { FRIENDS, MONTHS } from "../data";
 
 interface TripsPageProps {

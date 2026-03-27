@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import type { Trip, Friend, BusyMap, CellData } from "../types";
 import type { Theme } from "../theme";
-import { Avatar, Pill } from "./ui";
+import { Avatar, Pill } from "./UI";
 import { CalendarEmptyState } from "./CalendarEmptyState";
 import { FRIENDS, MONTHS, DAYS_SHORT, CURRENT_USER } from "../data";
 import { daysInMonth, firstDow, fmtH, genBusy, getFreeSlots, computeWindows } from "../utils";

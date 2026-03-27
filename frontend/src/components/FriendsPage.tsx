@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { Trip } from "../types";
 import type { Theme } from "../theme";
-import { Avatar, Pill, LockedBtn } from "./ui";
+import { Avatar, Pill, LockedBtn } from "./UI";
 import { FRIENDS } from "../data";
 
 interface FriendsPageProps {

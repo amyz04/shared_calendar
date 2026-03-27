@@ -1,6 +1,6 @@
 import type { Theme } from "../theme";
 import { MONTHS, DAYS_SHORT, CURRENT_USER } from "../data";
-import { Avatar, Pill } from "./ui";
+import { Avatar, Pill } from "./UI";
 import { daysInMonth, firstDow } from "../utils";
 
 interface CalendarEmptyStateProps {

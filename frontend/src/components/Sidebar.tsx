@@ -1,6 +1,6 @@
 import type { NavId, Trip, Friend } from "../types";
 import type { Theme } from "../theme";
-import { Avatar, ThemeToggle } from "./ui";
+import { Avatar, ThemeToggle } from "./UI";
 import { FRIENDS, MONTHS, NAV_ITEMS, CURRENT_USER } from "../data";
 
 interface SidebarProps {
