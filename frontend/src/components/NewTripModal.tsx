@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { Trip } from "../types";
 import type { Theme } from "../theme";
-import { Avatar } from "./ui";
+import { Avatar } from "./UI";
 import { FRIENDS, MONTHS, EMOJIS } from "../data";
 
 interface NewTripModalProps {

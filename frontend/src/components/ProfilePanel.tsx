@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import type { CalendarSource } from "../types";
 import type { Theme } from "../theme";
-import { Pill } from "./ui";
+import { Pill } from "./UI";
 import { FRIENDS, MONTHS, INIT_TRIPS } from "../data";
 
 interface ProfilePanelProps {
