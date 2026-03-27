@@ -7,10 +7,7 @@ import lombok.Getter;
 public class CreateTripRequest {
     @NotBlank
     private String name;
-
-    @NotBlank
-    private String groupId;
-
+    
     private LocalDate startDate;
     private LocalDate endDate;
 
