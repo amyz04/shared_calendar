@@ -1,14 +1,14 @@
-import { useState } from 'react'
-import { DARK, LIGHT } from './theme'
-import { INIT_TRIPS } from './data'
-import type { NavId, Trip, CalendarSource, AuthMode } from './types'
-import { Sidebar } from './components/Sidebar'
-import { LoginPage } from './components/LoginPage'
-import { CalendarPage } from './components/CalendarPage'
-import { TripsPage } from './components/TripsPage'
-import { FriendsPage } from './components/FriendsPage'
-import { ProfilePanel } from './components/ProfilePanel'
-import { NewTripModal } from './components/NewTripModal'
+import { useState } from "react";
+import { DARK, LIGHT } from "./theme";
+import { INIT_TRIPS } from "./data";
+import type { NavId, Trip, CalendarSource, AuthMode } from "./types";
+import { Sidebar } from "./components/Sidebar";
+import { LoginPage } from "./components/login/LoginPage";
+import { CalendarPage } from "./components/CalendarPage";
+import { TripsPage } from "./components/TripsPage";
+import { FriendsPage } from "./components/FriendsPage";
+import { ProfilePanel } from "./components/ProfilePanel";
+import { NewTripModal } from "./components/NewTripModal";
 
 export default function App() {
   const [isDark, setIsDark] = useState(true);
@@ -25,9 +25,10 @@ export default function App() {
   const T = isDark ? DARK : LIGHT;
 
   const handleCreate = (data: Omit<Trip, "id" | "status">) => {
-    const id = Math.max(...trips.map(t => t.id)) + 1;
-    setTrips(p => [...p, { id, status: "planning", ...data }]);
-    setActive(id); setView("calendar");
+    const id = Math.max(...trips.map((t) => t.id)) + 1;
+    setTrips((p) => [...p, { id, status: "planning", ...data }]);
+    setActive(id);
+    setView("calendar");
   };
 
   if (!authMode) {
@@ -42,7 +43,12 @@ export default function App() {
           ::placeholder{color:${T.textLo};}
           button{transition:all 0.15s;}
         `}</style>
-        <LoginPage T={T} isDark={isDark} toggleTheme={() => setIsDark(d => !d)} onAuth={setAuthMode} />
+        <LoginPage
+          T={T}
+          isDark={isDark}
+          toggleTheme={() => setIsDark((d) => !d)}
+          onAuth={setAuthMode}
+        />
       </>
     );
   }
@@ -75,34 +81,99 @@ export default function App() {
         <ProfilePanel
           onClose={() => setShowProfile(false)}
           calendars={calendars}
-          onAddCalendar={c => setCalendars(p => [...p, c])}
-          onRemoveCalendar={id => setCalendars(p => p.filter(c => c.id !== id))}
+          onAddCalendar={(c) => setCalendars((p) => [...p, c])}
+          onRemoveCalendar={(id) =>
+            setCalendars((p) => p.filter((c) => c.id !== id))
+          }
           T={T}
         />
       )}
 
       <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
         <Sidebar
-          active={view} onNav={setView} trips={trips}
-          activeTripId={activeTripId} onSelectTrip={setActive}
+          active={view}
+          onNav={setView}
+          trips={trips}
+          activeTripId={activeTripId}
+          onSelectTrip={setActive}
           onNewTrip={() => !isGuest && setShowModal(true)}
           onOpenProfile={() => !isGuest && setShowProfile(true)}
-          T={T} isDark={isDark} toggleTheme={() => setIsDark(d => !d)}
+          T={T}
+          isDark={isDark}
+          toggleTheme={() => setIsDark((d) => !d)}
           isGuest={isGuest}
           onSignIn={() => setAuthMode(null)}
         />
 
-        <main style={{ flex: 1, overflowY: "auto", padding: "32px 36px", background: T.bgAlt }}>
+        <main
+          style={{
+            flex: 1,
+            overflowY: "auto",
+            padding: "32px 36px",
+            background: T.bgAlt,
+          }}
+        >
           {/* Top status bar — no New trip button here */}
-          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 32, gap: 10 }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              marginBottom: 32,
+              gap: 10,
+            }}
+          >
             {isGuest && (
-              <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 20, background: `${T.amber}15`, border: `1px solid ${T.amber}40`, fontSize: 11, color: T.amber, fontFamily: "'Syne',sans-serif" }}>
-                <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx={12} cy={12} r={3} /></svg>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "6px 12px",
+                  borderRadius: 20,
+                  background: `${T.amber}15`,
+                  border: `1px solid ${T.amber}40`,
+                  fontSize: 11,
+                  color: T.amber,
+                  fontFamily: "'Syne',sans-serif",
+                }}
+              >
+                <svg
+                  width={12}
+                  height={12}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                >
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx={12} cy={12} r={3} />
+                </svg>
                 Guest mode
               </div>
             )}
-            <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 20, background: T.surface, border: `1px solid ${T.border}`, fontSize: 11, color: T.textMd, fontFamily: "'Syne',sans-serif" }}>
-              <div style={{ width: 6, height: 6, borderRadius: "50%", background: T.green }} />
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "6px 12px",
+                borderRadius: 20,
+                background: T.surface,
+                border: `1px solid ${T.border}`,
+                fontSize: 11,
+                color: T.textMd,
+                fontFamily: "'Syne',sans-serif",
+              }}
+            >
+              <div
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  background: T.green,
+                }}
+              />
               Spring Boot · connected
             </div>
           </div>
@@ -122,18 +193,16 @@ export default function App() {
               trips={trips}
               activeTripId={activeTripId}
               onSelectTrip={setActive}
-              onOpenProfile={() => isGuest ? setAuthMode(null) : setShowProfile(true)}
+              onOpenProfile={() =>
+                isGuest ? setAuthMode(null) : setShowProfile(true)
+              }
               calendarsSynced={calendarsSynced}
               T={T}
               isGuest={isGuest}
             />
           )}
           {view === "friends" && (
-            <FriendsPage
-              trips={trips}
-              T={T}
-              isGuest={isGuest}
-            />
+            <FriendsPage trips={trips} T={T} isGuest={isGuest} />
           )}
         </main>
       </div>
