@@ -53,36 +53,47 @@ export function Sidebar({ active, onNav, trips, activeTripId, onSelectTrip, onNe
           <span style={{ fontSize: 10, fontWeight: 600, color: T.textLo, letterSpacing: "0.08em", fontFamily: "'Syne',sans-serif" }}>TRIPS</span>
           {!isGuest && <button onClick={onNewTrip} style={{ fontSize: 16, lineHeight: 1, color: T.textMd, background: "none", border: "none", cursor: "pointer", padding: 0 }}>+</button>}
         </div>
-        {trips.map(t => {
-          const members = t.memberIds.map(id => FRIENDS.find(f => f.id === id)).filter(Boolean) as Friend[];
-          const on = activeTripId === t.id;
-          return (
-            <button key={t.id} onClick={() => { onSelectTrip(t.id); onNav("calendar"); }} style={{ width: "100%", padding: "8px 10px", borderRadius: 9, marginBottom: 2, background: on ? T.violetSoft : "transparent", border: `1px solid ${on ? T.violet + "30" : "transparent"}`, cursor: "pointer", textAlign: "left" }}
-              onMouseEnter={e => { if (!on) (e.currentTarget as HTMLButtonElement).style.background = T.surfaceHi; }}
-              onMouseLeave={e => { if (!on) (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
-                <span style={{ fontSize: 15 }}>{t.cover}</span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: on ? T.violet : T.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontFamily: "'Syne',sans-serif" }}>{t.name}</div>
-                  <div style={{ fontSize: 10, color: T.textLo, marginTop: 1 }}>{MONTHS[t.month].slice(0, 3)} {t.year}</div>
-                </div>
-              </div>
-              <div style={{ display: "flex" }}>
-                {members.slice(0, 5).map((f, i) => (
-                  <div key={f.id} style={{ marginLeft: i === 0 ? 0 : -6, zIndex: 10 - i }}>
-                    <Avatar f={f} size={18} T={T} />
+
+        {isGuest ? (
+          /* Guest — empty trips section */
+          <div style={{ padding: "16px 10px", textAlign: "center", borderRadius: 10, border: `1px dashed ${T.border}` }}>
+            <div style={{ fontSize: 11, color: T.textLo, fontFamily: "'Syne',sans-serif", lineHeight: 1.5 }}>
+              Sign in to see your trips
+            </div>
+          </div>
+        ) : (
+          /* Logged in — trip list */
+          <>
+            {trips.map(t => {
+              const members = t.memberIds.map(id => FRIENDS.find(f => f.id === id)).filter(Boolean) as Friend[];
+              const on = activeTripId === t.id;
+              return (
+                <button key={t.id} onClick={() => { onSelectTrip(t.id); onNav("calendar"); }} style={{ width: "100%", padding: "8px 10px", borderRadius: 9, marginBottom: 2, background: on ? T.violetSoft : "transparent", border: `1px solid ${on ? T.violet + "30" : "transparent"}`, cursor: "pointer", textAlign: "left" }}
+                  onMouseEnter={e => { if (!on) (e.currentTarget as HTMLButtonElement).style.background = T.surfaceHi; }}
+                  onMouseLeave={e => { if (!on) (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
+                    <span style={{ fontSize: 15 }}>{t.cover}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: on ? T.violet : T.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontFamily: "'Syne',sans-serif" }}>{t.name}</div>
+                      <div style={{ fontSize: 10, color: T.textLo, marginTop: 1 }}>{MONTHS[t.month].slice(0, 3)} {t.year}</div>
+                    </div>
                   </div>
-                ))}
-              </div>
+                  <div style={{ display: "flex" }}>
+                    {members.slice(0, 5).map((f, i) => (
+                      <div key={f.id} style={{ marginLeft: i === 0 ? 0 : -6, zIndex: 10 - i }}>
+                        <Avatar f={f} size={18} T={T} />
+                      </div>
+                    ))}
+                  </div>
+                </button>
+              );
+            })}
+            <button onClick={onNewTrip} style={{ width: "100%", padding: "7px 10px", borderRadius: 9, marginTop: 4, background: "transparent", border: `1px dashed ${T.border}`, color: T.textLo, fontSize: 12, cursor: "pointer", fontFamily: "'Syne',sans-serif" }}
+              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = T.violet; (e.currentTarget as HTMLButtonElement).style.color = T.violet; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = T.border; (e.currentTarget as HTMLButtonElement).style.color = T.textLo; }}>
+              + New trip
             </button>
-          );
-        })}
-        {!isGuest && (
-          <button onClick={onNewTrip} style={{ width: "100%", padding: "7px 10px", borderRadius: 9, marginTop: 4, background: "transparent", border: `1px dashed ${T.border}`, color: T.textLo, fontSize: 12, cursor: "pointer", fontFamily: "'Syne',sans-serif" }}
-            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = T.violet; (e.currentTarget as HTMLButtonElement).style.color = T.violet; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = T.border; (e.currentTarget as HTMLButtonElement).style.color = T.textLo; }}>
-            + New trip
-          </button>
+          </>
         )}
       </div>
 
