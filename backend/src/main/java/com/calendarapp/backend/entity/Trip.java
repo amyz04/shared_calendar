@@ -30,24 +30,12 @@ public class Trip {
     @JoinColumn(name = "owner_id", nullable = false)
     private User owner;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "itinerary_id")
-    private Itinerary itinerary;
-
     @ManyToMany
-    @JoinTable(
-        name = "trip_pending_members",
-        joinColumns = @JoinColumn(name = "trip_id"),
-        inverseJoinColumns = @JoinColumn(name = "user_id")
-    )
+    @JoinTable(name = "trip_pending_members", joinColumns = @JoinColumn(name = "trip_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
     private List<User> pendingMembers = new ArrayList<>();
 
     @ManyToMany
-    @JoinTable(
-        name = "trip_confirmed_members",
-        joinColumns = @JoinColumn(name = "trip_id"),
-        inverseJoinColumns = @JoinColumn(name = "user_id")
-    )
+    @JoinTable(name = "trip_confirmed_members", joinColumns = @JoinColumn(name = "trip_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
     private List<User> confirmedMembers = new ArrayList<>();
 
     @Column(name = "start_date", nullable = false)

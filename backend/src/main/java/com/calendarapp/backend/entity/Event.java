@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.Setter;
 import java.time.LocalDateTime;
 
-
 @Entity
 @Table(name = "events")
 @Getter
@@ -21,9 +20,9 @@ public class Event {
         PROPOSED, CONFIRMED, CANCELLED
     }
 
-    @Id 
+    @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private String id; 
+    private String id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "itinerary_id", nullable = false)
@@ -33,13 +32,13 @@ public class Event {
     @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;
 
-    @Column (name = "event_name", nullable = false)
+    @Column(name = "event_name", nullable = false)
     private String name;
-    
-    @Column (nullable = true)
-    private String location; 
 
-    @Column (nullable = true)
+    @Column(nullable = true)
+    private String location;
+
+    @Column(nullable = true)
     private String description;
 
     @Column(name = "start_time", nullable = false)
@@ -47,9 +46,6 @@ public class Event {
 
     @Column(name = "end_time", nullable = false)
     private LocalDateTime endTime;
-
-    @Column(nullable = false)
-    private LocalDateTime date;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -66,5 +62,5 @@ public class Event {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
     }
-    
+
 }
