@@ -2,11 +2,10 @@ import type { Friend, Trip, NavId } from "./types";
 
 export const FRIENDS: Friend[] = [
   { id: 1, name: "Alex Lee",  initials: "AL", color: "#8b5cf6", email: "alex@email.com"   },
-  { id: 2, name: "Jordan M",  initials: "JM", color: "#f87171", email: "jordan@email.com" },
-  { id: 3, name: "Sam K",     initials: "SK", color: "#f59e0b", email: "sam@email.com"    },
-  { id: 4, name: "Priya R",   initials: "PR", color: "#34d399", email: "priya@email.com"  },
-  { id: 5, name: "Chris B",   initials: "CB", color: "#60a5fa", email: "chris@email.com"  },
+
 ];
+
+export const CURRENT_USER: Friend = FRIENDS[0];
 
 export const INIT_TRIPS: Trip[] = [
   { id: 1, name: "Portugal Summer", dest: "Lisbon", cover: "🇵🇹", year: 2025, month: 5, memberIds: [1, 2, 3, 4, 5], status: "planning" },

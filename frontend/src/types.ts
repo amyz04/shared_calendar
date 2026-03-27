@@ -41,3 +41,5 @@ export interface CalendarSource {
 }
 
 export type NavId = "trips" | "calendar" | "friends";
+
+export type AuthMode = "user" | "guest" | null;

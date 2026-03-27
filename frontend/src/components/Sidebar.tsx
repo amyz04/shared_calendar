@@ -1,7 +1,7 @@
 import type { NavId, Trip, Friend } from "../types";
 import type { Theme } from "../theme";
-import { Avatar, ThemeToggle } from "./UI";
-import { FRIENDS, MONTHS, NAV_ITEMS } from "../data";
+import { Avatar, ThemeToggle } from "./ui";
+import { FRIENDS, MONTHS, NAV_ITEMS, CURRENT_USER } from "../data";
 
 interface SidebarProps {
   active: NavId;
@@ -14,9 +14,11 @@ interface SidebarProps {
   T: Theme;
   isDark: boolean;
   toggleTheme: () => void;
+  isGuest: boolean;
+  onSignIn: () => void;
 }
 
-export function Sidebar({ active, onNav, trips, activeTripId, onSelectTrip, onNewTrip, onOpenProfile, T, isDark, toggleTheme }: SidebarProps) {
+export function Sidebar({ active, onNav, trips, activeTripId, onSelectTrip, onNewTrip, onOpenProfile, T, isDark, toggleTheme, isGuest, onSignIn }: SidebarProps) {
   return (
     <aside style={{ width: 240, background: T.surface, borderRight: `1px solid ${T.border}`, display: "flex", flexDirection: "column", height: "100vh", flexShrink: 0 }}>
       <div style={{ padding: "18px 18px 14px", borderBottom: `1px solid ${T.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -49,7 +51,7 @@ export function Sidebar({ active, onNav, trips, activeTripId, onSelectTrip, onNe
       <div style={{ flex: 1, overflowY: "auto", padding: "6px 10px" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 8px", marginBottom: 6 }}>
           <span style={{ fontSize: 10, fontWeight: 600, color: T.textLo, letterSpacing: "0.08em", fontFamily: "'Syne',sans-serif" }}>TRIPS</span>
-          <button onClick={onNewTrip} style={{ fontSize: 16, lineHeight: 1, color: T.textMd, background: "none", border: "none", cursor: "pointer", padding: 0 }}>+</button>
+          {!isGuest && <button onClick={onNewTrip} style={{ fontSize: 16, lineHeight: 1, color: T.textMd, background: "none", border: "none", cursor: "pointer", padding: 0 }}>+</button>}
         </div>
         {trips.map(t => {
           const members = t.memberIds.map(id => FRIENDS.find(f => f.id === id)).filter(Boolean) as Friend[];
@@ -75,26 +77,40 @@ export function Sidebar({ active, onNav, trips, activeTripId, onSelectTrip, onNe
             </button>
           );
         })}
-        <button onClick={onNewTrip} style={{ width: "100%", padding: "7px 10px", borderRadius: 9, marginTop: 4, background: "transparent", border: `1px dashed ${T.border}`, color: T.textLo, fontSize: 12, cursor: "pointer", fontFamily: "'Syne',sans-serif" }}
-          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = T.violet; (e.currentTarget as HTMLButtonElement).style.color = T.violet; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = T.border; (e.currentTarget as HTMLButtonElement).style.color = T.textLo; }}>
-          + New trip
-        </button>
+        {!isGuest && (
+          <button onClick={onNewTrip} style={{ width: "100%", padding: "7px 10px", borderRadius: 9, marginTop: 4, background: "transparent", border: `1px dashed ${T.border}`, color: T.textLo, fontSize: 12, cursor: "pointer", fontFamily: "'Syne',sans-serif" }}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = T.violet; (e.currentTarget as HTMLButtonElement).style.color = T.violet; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = T.border; (e.currentTarget as HTMLButtonElement).style.color = T.textLo; }}>
+            + New trip
+          </button>
+        )}
       </div>
 
       <div style={{ borderTop: `1px solid ${T.border}`, padding: "10px" }}>
-        <button onClick={onOpenProfile} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 9, background: "transparent", border: "1px solid transparent", cursor: "pointer", textAlign: "left" }}
-          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = T.surfaceHi; (e.currentTarget as HTMLButtonElement).style.borderColor = T.border; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "transparent"; (e.currentTarget as HTMLButtonElement).style.borderColor = "transparent"; }}>
-          <div style={{ position: "relative", flexShrink: 0 }}>
-            <Avatar f={FRIENDS[0]} size={30} T={T} />
-            <div style={{ position: "absolute", bottom: 0, right: 0, width: 8, height: 8, borderRadius: "50%", background: T.green, border: `2px solid ${T.surface}` }} />
+        {isGuest ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 6, padding: "6px 10px" }}>
+            <div style={{ fontSize: 11, color: T.textLo, fontFamily: "'Syne',sans-serif", display: "flex", alignItems: "center", gap: 6 }}>
+              <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx={12} cy={12} r={3} /></svg>
+              Browsing as guest
+            </div>
+            <button onClick={onSignIn} style={{ width: "100%", padding: "7px", borderRadius: 8, background: T.violet, border: "none", color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "'Syne',sans-serif" }}>
+              Sign in
+            </button>
           </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: T.text, fontFamily: "'Syne',sans-serif" }}>{FRIENDS[0].name}</div>
-            <div style={{ fontSize: 10, color: T.textLo }}>View profile →</div>
-          </div>
-        </button>
+        ) : (
+          <button onClick={onOpenProfile} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 9, background: "transparent", border: "1px solid transparent", cursor: "pointer", textAlign: "left" }}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = T.surfaceHi; (e.currentTarget as HTMLButtonElement).style.borderColor = T.border; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "transparent"; (e.currentTarget as HTMLButtonElement).style.borderColor = "transparent"; }}>
+            <div style={{ position: "relative", flexShrink: 0 }}>
+              <Avatar f={CURRENT_USER} size={30} T={T} />
+              <div style={{ position: "absolute", bottom: 0, right: 0, width: 8, height: 8, borderRadius: "50%", background: T.green, border: `2px solid ${T.surface}` }} />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: T.text, fontFamily: "'Syne',sans-serif" }}>{CURRENT_USER.name}</div>
+              <div style={{ fontSize: 10, color: T.textLo }}>View profile →</div>
+            </div>
+          </button>
+        )}
       </div>
     </aside>
   );

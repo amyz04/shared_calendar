@@ -47,3 +47,41 @@ export function ThemeToggle({ isDark, toggle, T }: ThemeToggleProps) {
     </button>
   );
 }
+
+// ─── Locked Button — shaded out for guests ────────────────────────────────────
+
+interface LockedBtnProps {
+  children: React.ReactNode;
+  T: Theme;
+  style?: React.CSSProperties;
+}
+
+export function LockedBtn({ children, T, style = {} }: LockedBtnProps) {
+  return (
+    <div
+      title="Sign in to use this feature"
+      style={{
+        opacity: 0.4,
+        cursor: "not-allowed",
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 7,
+        padding: "9px 18px",
+        borderRadius: 9,
+        background: T.border,
+        fontSize: 13,
+        fontWeight: 600,
+        color: T.textLo,
+        fontFamily: "'Syne',sans-serif",
+        userSelect: "none",
+        ...style,
+      }}
+    >
+      <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
+        <rect x={3} y={11} width={18} height={11} rx={2} />
+        <path d="M7 11V7a5 5 0 0110 0v4" />
+      </svg>
+      {children}
+    </div>
+  );
+}
