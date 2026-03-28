@@ -1,25 +1,22 @@
 import { useState } from "react";
-import type { Theme } from "../../theme";
 import { FormField } from "../form/FormField";
 import { PasswordInput } from "../form/PasswordInput";
 import { DateOfBirthInput } from "../form/DateOfBirthInput";
+import { inputCls } from "../ui/inputStyle";
 
-interface RegisterFormProps {
-  T: Theme;
-  inputStyle: React.CSSProperties;
-  onSubmit: (data: RegisterData) => void;
-}
-
-// companion type you'd define alongside it
 interface RegisterData {
   firstName: string;
   lastName: string;
   email: string;
   password: string;
-  dob: string; // "YYYY-MM-DD"
+  dob: string;
 }
 
-export function RegisterForm({ T, inputStyle, onSubmit }: RegisterFormProps) {
+interface RegisterFormProps {
+  onSubmit: (data: RegisterData) => void;
+}
+
+export function RegisterForm({ onSubmit }: RegisterFormProps) {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -27,57 +24,48 @@ export function RegisterForm({ T, inputStyle, onSubmit }: RegisterFormProps) {
   const [dob, setDob] = useState("");
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-        <FormField label="First name" T={T}>
+    <div className="flex flex-col gap-3">
+      <div className="grid grid-cols-2 gap-2.5">
+        <FormField label="First name">
           <input
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
             placeholder="Alex"
-            style={inputStyle}
+            className={inputCls}
           />
         </FormField>
-        <FormField label="Last name" T={T}>
+        <FormField label="Last name">
           <input
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
             placeholder="Lee"
-            style={inputStyle}
+            className={inputCls}
           />
         </FormField>
       </div>
 
-      <DateOfBirthInput
-        value={dob}
-        onChange={setDob}
-        T={T}
-        inputStyle={inputStyle}
-      />
+      <DateOfBirthInput value={dob} onChange={setDob} />
 
-      <FormField label="Email" T={T}>
+      <FormField label="Email">
         <input
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          type="email"
           placeholder="you@email.com"
-          style={inputStyle}
+          type="email"
+          className={inputCls}
         />
       </FormField>
 
-      <PasswordInput
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        T={T}
-        inputStyle={inputStyle}
-      />
+      <FormField label="Password">
+        <PasswordInput
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+      </FormField>
 
       <button
         onClick={() => onSubmit({ firstName, lastName, email, password, dob })}
-        style={
-          {
-            /* your violet button styles */
-          }
-        }
+        className="w-full py-2.5 mt-1 rounded-lg bg-violet-500 hover:bg-violet-600 text-white text-[13px] font-semibold font-syne border-none cursor-pointer transition-all"
       >
         Create account
       </button>

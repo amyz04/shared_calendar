@@ -1,23 +1,13 @@
 import type React from "react";
-import type { Theme } from "../../theme";
 
 interface FormFieldProps {
   label: string;
-  T: Theme;
   children: React.ReactNode;
 }
-
-export function FormField({ label, T, children }: FormFieldProps) {
+export function FormField({ label, children }: FormFieldProps) {
   return (
     <div>
-      <div
-        style={{
-          fontSize: 11,
-          color: T.textMd,
-          marginBottom: 5,
-          fontFamily: "'Syne',sans-serif",
-        }}
-      >
+      <div className="text-[11px] text-slate-500 dark:text-slate-400 mb-1.5 font-syne">
         {label}
       </div>
       {children}

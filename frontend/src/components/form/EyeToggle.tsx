@@ -1,33 +1,14 @@
-import type { Theme } from "../../theme";
-
-// components/form/EyeToggle.tsx
 interface EyeToggleProps {
   show: boolean;
   onToggle: () => void;
-  T: Theme;
 }
 
-export function EyeToggle({ show, onToggle, T }: EyeToggleProps) {
+export function EyeToggle({ show, onToggle }: EyeToggleProps) {
   return (
     <button
       type="button"
       onClick={onToggle}
-      style={{
-        position: "absolute",
-        right: 12,
-        top: "50%",
-        transform: "translateY(-50%)",
-        background: "none",
-        border: "none",
-        cursor: "pointer",
-        color: T.textLo,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 0,
-      }}
-      onMouseEnter={(e) => (e.currentTarget.style.color = T.violet)}
-      onMouseLeave={(e) => (e.currentTarget.style.color = T.textLo)}
+      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-violet-500 transition-colors flex items-center justify-center p-0 bg-transparent border-none cursor-pointer"
     >
       {show ? (
         <svg

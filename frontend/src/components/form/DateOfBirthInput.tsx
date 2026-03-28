@@ -1,22 +1,21 @@
-import type { Theme } from "../../theme";
 import { FormField } from "./FormField";
+import { inputCls } from "../ui/inputStyle";
 
-interface DOBProps {
-  value: string; // ISO date string "YYYY-MM-DD"
+interface DateOfBirthInputProps {
+  value: string;
   onChange: (val: string) => void;
-  T: Theme;
-  inputStyle: React.CSSProperties;
 }
 
-export function DateOfBirthInput({ value, onChange, T, inputStyle }: DOBProps) {
+export function DateOfBirthInput({ value, onChange }: DateOfBirthInputProps) {
   return (
-    <FormField label="Date of birth" T={T}>
+    <FormField label="Date of birth">
       <input
         type="date"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        max={new Date().toISOString().split("T")[0]} // prevents future dates
-        style={inputStyle}
+        max={new Date().toISOString().split("T")[0]}
+        min="1900-01-01"
+        className={inputCls}
       />
     </FormField>
   );

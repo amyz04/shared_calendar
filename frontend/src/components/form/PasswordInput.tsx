@@ -1,31 +1,24 @@
-import type { Theme } from "../../theme";
-import { EyeToggle } from "./EyeToggle";
 import { useState } from "react";
+import { EyeToggle } from "./EyeToggle";
+import { inputCls } from "../ui/inputStyle";
 
 interface PasswordInputProps {
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  T: Theme;
-  inputStyle: React.CSSProperties;
 }
 
-export function PasswordInput({
-  value,
-  onChange,
-  T,
-  inputStyle,
-}: PasswordInputProps) {
+export function PasswordInput({ value, onChange }: PasswordInputProps) {
   const [show, setShow] = useState(false);
   return (
-    <div style={{ position: "relative" }}>
+    <div className="relative">
       <input
         value={value}
         onChange={onChange}
         type={show ? "text" : "password"}
         placeholder="Password"
-        style={{ ...inputStyle, paddingRight: 42 }}
+        className={`${inputCls} pr-10`}
       />
-      <EyeToggle show={show} onToggle={() => setShow((p) => !p)} T={T} />
+      <EyeToggle show={show} onToggle={() => setShow((p) => !p)} />
     </div>
   );
 }

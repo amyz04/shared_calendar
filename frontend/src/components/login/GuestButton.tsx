@@ -1,60 +1,21 @@
-import type { Theme } from "../../theme";
-
 interface GuestButtonProps {
   onGuest: () => void;
-  T: Theme;
 }
-// divider and guest CTA
-export function GuestButton({ onGuest, T }: GuestButtonProps) {
+
+export function GuestButton({ onGuest }: GuestButtonProps) {
   return (
     <>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          margin: "20px 0",
-        }}
-      >
-        <div style={{ flex: 1, height: 1, background: T.border }} />
-        <span
-          style={{
-            fontSize: 12,
-            color: T.textLo,
-            fontFamily: "'Syne',sans-serif",
-          }}
-        >
+      <div className="flex items-center gap-3 my-5">
+        <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
+        <span className="text-[12px] text-slate-400 dark:text-slate-600 font-syne">
           or
         </span>
-        <div style={{ flex: 1, height: 1, background: T.border }} />
+        <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
       </div>
 
       <button
         onClick={onGuest}
-        style={{
-          width: "100%",
-          padding: "11px",
-          borderRadius: 9,
-          background: "transparent",
-          border: `1px solid ${T.border}`,
-          color: T.textMd,
-          fontSize: 13,
-          fontWeight: 500,
-          cursor: "pointer",
-          fontFamily: "'Syne',sans-serif",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 7,
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.borderColor = T.violet;
-          e.currentTarget.style.color = T.violet;
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.borderColor = T.border;
-          e.currentTarget.style.color = T.textMd;
-        }}
+        className="w-full py-2.5 rounded-lg bg-transparent border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 text-[13px] font-medium font-syne flex items-center justify-center gap-1.5 cursor-pointer transition-all hover:border-violet-500 hover:text-violet-500"
       >
         <svg
           width={14}
@@ -71,16 +32,7 @@ export function GuestButton({ onGuest, T }: GuestButtonProps) {
         Continue as guest
       </button>
 
-      <p
-        style={{
-          fontSize: 11,
-          color: T.textLo,
-          textAlign: "center",
-          marginTop: 14,
-          lineHeight: 1.6,
-          fontFamily: "'Syne',sans-serif",
-        }}
-      >
+      <p className="text-[11px] text-slate-400 dark:text-slate-600 text-center mt-3.5 leading-relaxed font-syne">
         Guest mode lets you explore the app. Some features require an account.
       </p>
     </>
