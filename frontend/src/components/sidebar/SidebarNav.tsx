@@ -1,23 +1,23 @@
-import type { NavId } from "../../types";
+// components/sidebar/SidebarNav.tsx
 import { NAV_ITEMS } from "../../data";
 
 interface SidebarNavProps {
-  active: NavId;
-  onNav: (id: NavId) => void;
+  activePath: string;
+  onNav: (path: string) => void;
 }
 
-export function SidebarNav({ active, onNav }: SidebarNavProps) {
+export function SidebarNav({ activePath, onNav }: SidebarNavProps) {
   return (
     <div className="px-2.5 pt-2.5 pb-1.5">
       <div className="text-[10px] font-semibold text-slate-400 dark:text-slate-600 tracking-widest font-syne px-2 mb-1">
         MENU
       </div>
       {NAV_ITEMS.map((n) => {
-        const on = active === n.id;
+        const on = activePath === n.path; // ← was activePath === n.id
         return (
           <button
-            key={n.id}
-            onClick={() => onNav(n.id)}
+            key={n.path}
+            onClick={() => onNav(n.path)}
             className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg mb-0.5 text-[13px] font-syne cursor-pointer border transition-all text-left
               ${
                 on

@@ -1,13 +1,13 @@
 import type { Trip, Friend } from "../../types";
 import { Avatar } from "../ui";
 import { FRIENDS, MONTHS } from "../../data";
+import { useNavigate } from "react-router-dom";
 
 interface SidebarTripsProps {
   trips: Trip[];
   activeTripId: number;
   onSelectTrip: (id: number) => void;
   onNewTrip: () => void;
-  onNav: (id: "calendar") => void;
   isGuest: boolean;
 }
 
@@ -16,9 +16,9 @@ export function SidebarTrips({
   activeTripId,
   onSelectTrip,
   onNewTrip,
-  onNav,
   isGuest,
 }: SidebarTripsProps) {
+  const navigate = useNavigate();
   return (
     <div className="flex-1 overflow-y-auto px-2.5 py-1.5">
       <div className="flex items-center justify-between px-2 mb-1.5">
@@ -53,7 +53,7 @@ export function SidebarTrips({
                 key={t.id}
                 onClick={() => {
                   onSelectTrip(t.id);
-                  onNav("calendar");
+                  navigate("/calendar");
                 }}
                 className={`w-full px-2.5 py-2 rounded-lg mb-0.5 cursor-pointer text-left border transition-all
                   ${
