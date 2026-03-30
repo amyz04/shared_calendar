@@ -1,4 +1,4 @@
-package com.calendarapp.backend.security;
+package com.calendarapp.backend.service;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

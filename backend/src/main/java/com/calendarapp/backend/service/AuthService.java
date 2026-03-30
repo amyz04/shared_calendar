@@ -16,6 +16,7 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
 
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -32,7 +33,9 @@ public class AuthService {
 
         userRepository.save(user);
 
-        return new AuthResponse("mock-jwt-token", mapToUserResponse(user));
+        // generate a real token instead of "mock-jwt-token"
+        String token = jwtUtil.generateToken(user.getEmail());
+        return new AuthResponse(token, mapToUserResponse(user));
     }
 
     public AuthResponse login(LoginRequest request) {
