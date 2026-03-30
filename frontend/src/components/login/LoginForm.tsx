@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { FormField } from "../form/FormField";
 import { PasswordInput } from "../form/PasswordInput";
-import type { Theme } from "../../theme";
+import { inputCls } from "../ui/inputStyle";
 
 interface LoginData {
   email: string;
@@ -9,51 +9,35 @@ interface LoginData {
 }
 
 interface LoginFormProps {
-  T: Theme;
-  inputStyle: React.CSSProperties;
   onSubmit: (data: LoginData) => void;
 }
 
-export function LoginForm({ T, inputStyle, onSubmit }: LoginFormProps) {
+export function LoginForm({ onSubmit }: LoginFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <FormField label="Email" T={T}>
+    <div className="flex flex-col gap-3">
+      <FormField label="Email">
         <input
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@email.com"
           type="email"
-          style={inputStyle}
+          className={inputCls}
         />
       </FormField>
 
-      <FormField label="Password" T={T}>
+      <FormField label="Password">
         <PasswordInput
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          T={T}
-          inputStyle={inputStyle}
         />
       </FormField>
 
       <button
         onClick={() => onSubmit({ email, password })}
-        style={{
-          width: "100%",
-          padding: "11px",
-          borderRadius: 9,
-          background: T.violet,
-          border: "none",
-          color: "#fff",
-          fontSize: 13,
-          fontWeight: 600,
-          cursor: "pointer",
-          fontFamily: "'Syne',sans-serif",
-          marginTop: 4,
-        }}
+        className="w-full py-2.5 mt-1 rounded-lg bg-violet-500 hover:bg-violet-600 text-white text-[13px] font-semibold font-syne border-none cursor-pointer transition-all"
       >
         Sign in
       </button>

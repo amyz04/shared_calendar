@@ -1,0 +1,54 @@
+import type { NavId, Trip } from "../../types";
+import { SidebarBrand } from "./SidebarBrand";
+import { SidebarNav } from "./SidebarNav";
+import { SidebarTrips } from "./SidebarTrips";
+import { SidebarFooter } from "./SidebarFooter";
+
+interface SidebarProps {
+  active: NavId;
+  onNav: (id: NavId) => void;
+  trips: Trip[];
+  activeTripId: number;
+  onSelectTrip: (id: number) => void;
+  onNewTrip: () => void;
+  onOpenProfile: () => void;
+  isDark: boolean;
+  toggleTheme: () => void;
+  isGuest: boolean;
+  onSignIn: () => void;
+}
+
+export function Sidebar({
+  active,
+  onNav,
+  trips,
+  activeTripId,
+  onSelectTrip,
+  onNewTrip,
+  onOpenProfile,
+  isDark,
+  toggleTheme,
+  isGuest,
+  onSignIn,
+}: SidebarProps) {
+  return (
+    <aside className="w-60 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 flex flex-col h-screen shrink-0">
+      <SidebarBrand isDark={isDark} toggleTheme={toggleTheme} />
+      <SidebarNav active={active} onNav={onNav} />
+      <div className="h-px bg-slate-200 dark:bg-slate-700 mx-2.5 my-1" />
+      <SidebarTrips
+        trips={trips}
+        activeTripId={activeTripId}
+        onSelectTrip={onSelectTrip}
+        onNewTrip={onNewTrip}
+        onNav={onNav}
+        isGuest={isGuest}
+      />
+      <SidebarFooter
+        isGuest={isGuest}
+        onOpenProfile={onOpenProfile}
+        onSignIn={onSignIn}
+      />
+    </aside>
+  );
+}

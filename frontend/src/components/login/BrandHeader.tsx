@@ -1,49 +1,20 @@
-import type { Theme } from "../../theme";
-
-// the logo and application name
-export function BrandHeader({ T }: { T: Theme }) {
+export function BrandHeader() {
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        marginBottom: 36,
-      }}
-    >
-      <div
-        style={{
-          width: 38,
-          height: 38,
-          borderRadius: 11,
-          background: T.violetSoft,
-          border: `1px solid ${T.violet}30`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
+    <div className="flex items-center gap-2.5 mb-9">
+      <div className="w-9 h-9 rounded-xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
         <svg
           width={18}
           height={18}
           viewBox="0 0 24 24"
           fill="none"
-          stroke={T.violet}
+          stroke="#8b5cf6"
           strokeWidth={2.2}
           strokeLinecap="round"
         >
           <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
         </svg>
       </div>
-      <span
-        style={{
-          fontSize: 24,
-          fontWeight: 700,
-          color: T.text,
-          fontFamily: "'Syne',sans-serif",
-          letterSpacing: "-0.03em",
-        }}
-      >
+      <span className="text-2xl font-bold text-slate-900 dark:text-slate-100 font-syne tracking-tight">
         voyage
       </span>
     </div>

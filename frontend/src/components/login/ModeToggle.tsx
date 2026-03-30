@@ -1,43 +1,23 @@
-import type { Theme } from "../../theme";
-
 export type AuthMode = "login" | "register";
 
 interface ModeToggleProps {
   mode: AuthMode;
   onChange: (mode: AuthMode) => void;
-  T: Theme;
 }
-// allows us to switch tabs between logging in and registering
-export function ModeToggle({ mode, onChange, T }: ModeToggleProps) {
+
+export function ModeToggle({ mode, onChange }: ModeToggleProps) {
   return (
-    <div
-      style={{
-        display: "flex",
-        background: T.surface,
-        borderRadius: 10,
-        padding: 3,
-        marginBottom: 24,
-        border: `1px solid ${T.border}`,
-      }}
-    >
+    <div className="flex bg-slate-100 dark:bg-slate-800 rounded-xl p-1 mb-6 border border-slate-200 dark:border-slate-700">
       {(["login", "register"] as const).map((m) => (
         <button
           key={m}
           onClick={() => onChange(m)}
-          style={{
-            flex: 1,
-            padding: "8px",
-            borderRadius: 8,
-            border: "none",
-            background: mode === m ? T.violet : "transparent",
-            color: mode === m ? "#fff" : T.textMd,
-            fontSize: 13,
-            fontWeight: mode === m ? 600 : 400,
-            cursor: "pointer",
-            fontFamily: "'Syne',sans-serif",
-            transition: "all 0.15s",
-            textTransform: "capitalize",
-          }}
+          className={`flex-1 py-2 rounded-lg text-[13px] font-syne transition-all cursor-pointer border-none
+            ${
+              mode === m
+                ? "bg-violet-500 text-white font-semibold shadow-sm"
+                : "bg-transparent text-slate-500 dark:text-slate-400 font-normal"
+            }`}
         >
           {m === "login" ? "Sign in" : "Create account"}
         </button>
