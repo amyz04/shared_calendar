@@ -27,13 +27,13 @@ public class SecurityConfig {
         http
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
-                // public routes — no token needed
                 .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
-                // everything else requires a valid token
+                .requestMatchers("/swagger-ui/**").permitAll()
+                .requestMatchers("/swagger-ui.html").permitAll()
+        
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session
-                // don't create sessions — JWT is stateless
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
@@ -43,7 +43,7 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(); // this part is already correct
+        return new BCryptPasswordEncoder();
     }
 
     @Bean
