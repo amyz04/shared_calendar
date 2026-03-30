@@ -2,6 +2,7 @@ package com.calendarapp.backend.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import java.time.LocalDateTime;
 
 @Getter
 @AllArgsConstructor
@@ -10,5 +11,5 @@ public class FriendshipResponse {
     private UserResponse sender;
     private UserResponse invitee;
     private String status;
-    private String createdAt;
+    private LocalDateTime createdAt;
 }
