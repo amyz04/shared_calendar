@@ -1,12 +1,12 @@
-import type { NavId, Trip } from "../../types";
+// components/sidebar/Sidebar.tsx
+import { useNavigate, useLocation } from "react-router-dom";
+import type { Trip } from "../../types";
 import { SidebarBrand } from "./SidebarBrand";
 import { SidebarNav } from "./SidebarNav";
 import { SidebarTrips } from "./SidebarTrips";
 import { SidebarFooter } from "./SidebarFooter";
 
 interface SidebarProps {
-  active: NavId;
-  onNav: (id: NavId) => void;
   trips: Trip[];
   activeTripId: number;
   onSelectTrip: (id: number) => void;
@@ -19,8 +19,6 @@ interface SidebarProps {
 }
 
 export function Sidebar({
-  active,
-  onNav,
   trips,
   activeTripId,
   onSelectTrip,
@@ -31,17 +29,22 @@ export function Sidebar({
   isGuest,
   onSignIn,
 }: SidebarProps) {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   return (
     <aside className="w-60 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 flex flex-col h-screen shrink-0">
       <SidebarBrand isDark={isDark} toggleTheme={toggleTheme} />
-      <SidebarNav active={active} onNav={onNav} />
+      <SidebarNav
+        activePath={location.pathname}
+        onNav={(path) => navigate(path)}
+      />
       <div className="h-px bg-slate-200 dark:bg-slate-700 mx-2.5 my-1" />
       <SidebarTrips
         trips={trips}
         activeTripId={activeTripId}
         onSelectTrip={onSelectTrip}
         onNewTrip={onNewTrip}
-        onNav={onNav}
         isGuest={isGuest}
       />
       <SidebarFooter

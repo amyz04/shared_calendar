@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { INIT_TRIPS } from "./data";
-import type { NavId, Trip, CalendarSource, AuthMode } from "./types";
+import type { Trip, CalendarSource, AuthMode } from "./types";
 import { Sidebar } from "./components/sidebar/Sidebar";
 import { LoginPage } from "./components/login/LoginPage";
 import { CalendarPage } from "./components/calendar/CalendarPage";
@@ -12,14 +13,14 @@ import { NewTripModal } from "./components/trips/NewTripModal";
 export default function App() {
   const [isDark, setIsDark] = useState(true);
   const [authMode, setAuthMode] = useState<AuthMode>(null);
-  const [view, setView] = useState<NavId>("trips");
   const [trips, setTrips] = useState<Trip[]>(INIT_TRIPS);
   const [activeTripId, setActive] = useState(1);
   const [showModal, setShowModal] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [calendars, setCalendars] = useState<CalendarSource[]>([]);
 
-  // Apply dark class to <html> for Tailwind dark mode strategy
+  const navigate = useNavigate();
+
   useEffect(() => {
     document.documentElement.classList.toggle("dark", isDark);
   }, [isDark]);
@@ -32,19 +33,35 @@ export default function App() {
     const id = Math.max(...trips.map((t) => t.id)) + 1;
     setTrips((p) => [...p, { id, status: "planning", ...data }]);
     setActive(id);
-    setView("calendar");
+    navigate("/calendar"); // ← was setView("calendar")
   };
 
+  const handleAuth = (mode: "user" | "guest") => {
+    setAuthMode(mode);
+    navigate("/trips"); // ← redirect to trips after login
+  };
+
+  // Not logged in — only the login route is accessible
   if (!authMode) {
     return (
-      <LoginPage
-        isDark={isDark}
-        toggleTheme={toggleTheme}
-        onAuth={setAuthMode}
-      />
+      <Routes>
+        <Route
+          path="/login"
+          element={
+            <LoginPage
+              isDark={isDark}
+              toggleTheme={toggleTheme}
+              onAuth={handleAuth}
+            />
+          }
+        />
+        {/* Redirect everything else to login */}
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
     );
   }
 
+  // Logged in — full app layout
   return (
     <div className="flex h-screen overflow-hidden">
       {showModal && !isGuest && (
@@ -65,8 +82,6 @@ export default function App() {
       )}
 
       <Sidebar
-        active={view}
-        onNav={setView}
         trips={trips}
         activeTripId={activeTripId}
         onSelectTrip={setActive}
@@ -75,7 +90,10 @@ export default function App() {
         isDark={isDark}
         toggleTheme={toggleTheme}
         isGuest={isGuest}
-        onSignIn={() => setAuthMode(null)}
+        onSignIn={() => {
+          setAuthMode(null);
+          navigate("/login");
+        }}
       />
 
       <main className="flex-1 overflow-y-auto p-8 bg-slate-100 dark:bg-slate-900">
@@ -103,28 +121,41 @@ export default function App() {
           </div>
         </div>
 
-        {view === "trips" && (
-          <TripsPage
-            trips={trips}
-            onSelectTrip={setActive}
-            onNewTrip={() => setShowModal(true)}
-            onNav={setView}
-            isGuest={isGuest}
-          />
-        )}
-        {view === "calendar" && (
-          <CalendarPage
-            trips={trips}
-            activeTripId={activeTripId}
-            onSelectTrip={setActive}
-            onOpenProfile={() =>
-              isGuest ? setAuthMode(null) : setShowProfile(true)
+        <Routes>
+          <Route
+            path="/trips"
+            element={
+              <TripsPage
+                trips={trips}
+                onSelectTrip={setActive}
+                onNewTrip={() => setShowModal(true)}
+                isGuest={isGuest}
+              />
             }
-            calendarsSynced={calendarsSynced}
-            isGuest={isGuest}
           />
-        )}
-        {view === "friends" && <FriendsPage trips={trips} isGuest={isGuest} />}
+          <Route
+            path="/calendar"
+            element={
+              <CalendarPage
+                trips={trips}
+                activeTripId={activeTripId}
+                onSelectTrip={setActive}
+                onOpenProfile={() =>
+                  isGuest ? setAuthMode(null) : setShowProfile(true)
+                }
+                calendarsSynced={calendarsSynced}
+                isGuest={isGuest}
+              />
+            }
+          />
+          <Route
+            path="/friends"
+            element={<FriendsPage trips={trips} isGuest={isGuest} />}
+          />
+          {/* Redirect / and anything unknown to /trips */}
+          <Route path="/" element={<Navigate to="/trips" replace />} />
+          <Route path="*" element={<Navigate to="/trips" replace />} />
+        </Routes>
       </main>
     </div>
   );

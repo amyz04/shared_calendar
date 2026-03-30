@@ -1,12 +1,12 @@
 import type { Trip, Friend, NavId } from "../../types";
 import { Avatar, Pill } from "../ui";
 import { FRIENDS, MONTHS } from "../../data";
+import { useNavigate } from "react-router-dom";
 
 interface TripsPageProps {
   trips: Trip[];
   onSelectTrip: (id: number) => void;
   onNewTrip: () => void;
-  onNav: (id: NavId) => void;
   isGuest: boolean;
 }
 
@@ -14,9 +14,9 @@ export function TripsPage({
   trips,
   onSelectTrip,
   onNewTrip,
-  onNav,
   isGuest,
 }: TripsPageProps) {
+  const navigate = useNavigate();
   const t = trips[0];
   const members = t.memberIds
     .map((id) => FRIENDS.find((f) => f.id === id))
@@ -87,7 +87,7 @@ export function TripsPage({
           <div
             onClick={() => {
               onSelectTrip(t.id);
-              onNav("calendar");
+              navigate("/calendar");
             }}
             className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden cursor-pointer transition-all hover:-translate-y-0.5 hover:border-violet-500/60"
           >
