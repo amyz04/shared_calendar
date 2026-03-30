@@ -33,7 +33,6 @@ public class AuthService {
 
         userRepository.save(user);
 
-        // generate a real token instead of "mock-jwt-token"
         String token = jwtUtil.generateToken(user.getEmail());
         return new AuthResponse(token, mapToUserResponse(user));
     }
@@ -46,7 +45,8 @@ public class AuthService {
             throw new RuntimeException("Invalid email or password");
         }
 
-        return new AuthResponse("mock-jwt-token", mapToUserResponse(user));
+        String token = jwtUtil.generateToken(user.getEmail());
+        return new AuthResponse(token, mapToUserResponse(user));
     }
 
     public UserResponse mapToUserResponse(User user) {
