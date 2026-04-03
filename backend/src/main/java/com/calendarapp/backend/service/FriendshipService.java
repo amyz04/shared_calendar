@@ -38,9 +38,19 @@ public class FriendshipService {
         Friendship friendship = friendshipRepository.findById(friendshipId)
                 .orElseThrow(() -> new RuntimeException("Friendship not found"));
 
-        friendship.setStatus(Friendship.Status.valueOf(status.toUpperCase()));
+        if (status == null || status.isBlank()) {
+        throw new RuntimeException("Status cannot be empty");
+        }
+
+        try {
+                friendship.setStatus(Friendship.Status.valueOf(status.toUpperCase()));
+        } catch (IllegalArgumentException e) {
+                throw new RuntimeException("Invalid status. Must be ACCEPTED or REJECTED");
+        }
+
         friendshipRepository.save(friendship);
         return mapToResponse(friendship);
+
     }
 
     public List<FriendshipResponse> getFriends(String userId) {

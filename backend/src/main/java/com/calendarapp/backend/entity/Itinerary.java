@@ -18,7 +18,7 @@ public class Itinerary {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "trip_id", nullable = false)
-    private Trip tripID;
+    private Trip trip;
 
     @Column
     private String notes;

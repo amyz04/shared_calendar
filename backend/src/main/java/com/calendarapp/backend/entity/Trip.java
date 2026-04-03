@@ -40,7 +40,7 @@ public class Trip {
     @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TripMember> members = new ArrayList<>();
 
-    @OneToOne(mappedBy = "tripID", cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "trip", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Itinerary itinerary;
 
     @Column(name = "start_date", nullable = false)
