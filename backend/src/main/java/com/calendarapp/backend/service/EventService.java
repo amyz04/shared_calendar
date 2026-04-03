@@ -8,8 +8,6 @@ import com.calendarapp.backend.entity.User;
 import com.calendarapp.backend.repository.EventRepository;
 import com.calendarapp.backend.repository.ItineraryRepository;
 import com.calendarapp.backend.repository.UserRepository;
-import com.calendarapp.backend.repository.TripRepository;
-import com.calendarapp.backend.entity.Trip;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -23,7 +21,7 @@ public class EventService {
     private final EventRepository eventRepository;
     private final ItineraryRepository itineraryRepository;
     private final UserRepository userRepository;
-    private final TripRepository tripRepository;
+
 
     public EventResponse createEvent(String itineraryId, String userId, CreateEventRequest request) {
         // Trip trip = tripRepository.findById(itineraryId)
