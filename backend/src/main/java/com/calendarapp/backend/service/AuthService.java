@@ -6,6 +6,8 @@ import com.calendarapp.backend.dto.response.AuthResponse;
 import com.calendarapp.backend.dto.response.UserResponse;
 import com.calendarapp.backend.entity.User;
 import com.calendarapp.backend.repository.UserRepository;
+
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -18,6 +20,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
+    @Transactional
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email already in use");

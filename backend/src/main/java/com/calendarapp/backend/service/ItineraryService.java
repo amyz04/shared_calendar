@@ -19,7 +19,7 @@ public class ItineraryService {
         Trip trip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new RuntimeException("Trip not found"));
 
-        Itinerary itinerary = itineraryRepository.findByTripID(trip)
+        Itinerary itinerary = itineraryRepository.findByTrip(trip)
                 .orElseThrow(() -> new RuntimeException("Itinerary not found"));
 
         return mapToResponse(itinerary);
@@ -29,7 +29,7 @@ public class ItineraryService {
         Trip trip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new RuntimeException("Trip not found"));
 
-        Itinerary itinerary = itineraryRepository.findByTripID(trip)
+        Itinerary itinerary = itineraryRepository.findByTrip(trip)
                 .orElseThrow(() -> new RuntimeException("Itinerary not found"));
 
         itinerary.setNotes(notes);
@@ -40,7 +40,7 @@ public class ItineraryService {
     private ItineraryResponse mapToResponse(Itinerary itinerary) {
     return new ItineraryResponse(
             itinerary.getId(),
-            itinerary.getTripID().getId(),
+            itinerary.getTrip().getId(),
             itinerary.getNotes(),
             itinerary.getCreatedAt()
     );
