@@ -4,8 +4,8 @@ import { INIT_TRIPS } from "./data";
 import type { Trip, CalendarSource, AuthMode } from "./types";
 import { Sidebar } from "./components/sidebar/Sidebar";
 import { LoginPage } from "./components/login/LoginPage";
-import { CalendarPage } from "./components/calendar/CalendarPage";
 import { TripsPage } from "./components/trips/TripsPage";
+import { TripDetailPage } from "./components/trips/TripDetailPage";
 import { FriendsPage } from "./components/friends/FriendsPage";
 import { ProfilePanel } from "./components/profile/ProfilePanel";
 import { NewTripModal } from "./components/trips/NewTripModal";
@@ -33,15 +33,14 @@ export default function App() {
     const id = Math.max(...trips.map((t) => t.id)) + 1;
     setTrips((p) => [...p, { id, status: "planning", ...data }]);
     setActive(id);
-    navigate("/calendar"); // ← was setView("calendar")
+    navigate("/calendar");
   };
 
   const handleAuth = (mode: "user" | "guest") => {
     setAuthMode(mode);
-    navigate("/trips"); // ← redirect to trips after login
+    navigate("/trips");
   };
 
-  // Not logged in — only the login route is accessible
   if (!authMode) {
     return (
       <Routes>
@@ -55,13 +54,11 @@ export default function App() {
             />
           }
         />
-        {/* Redirect everything else to login */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     );
   }
 
-  // Logged in — full app layout
   return (
     <div className="flex h-screen overflow-hidden">
       {showModal && !isGuest && (
@@ -100,15 +97,7 @@ export default function App() {
         <div className="flex justify-end mb-8 gap-2.5">
           {isGuest && (
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-400/15 border border-amber-400/40 text-[11px] text-amber-400 font-syne">
-              <svg
-                width={12}
-                height={12}
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                strokeLinecap="round"
-              >
+              <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
                 <circle cx={12} cy={12} r={3} />
               </svg>
@@ -136,7 +125,7 @@ export default function App() {
           <Route
             path="/calendar"
             element={
-              <CalendarPage
+              <TripDetailPage
                 trips={trips}
                 activeTripId={activeTripId}
                 onSelectTrip={setActive}
@@ -152,7 +141,6 @@ export default function App() {
             path="/friends"
             element={<FriendsPage trips={trips} isGuest={isGuest} />}
           />
-          {/* Redirect / and anything unknown to /trips */}
           <Route path="/" element={<Navigate to="/trips" replace />} />
           <Route path="*" element={<Navigate to="/trips" replace />} />
         </Routes>
