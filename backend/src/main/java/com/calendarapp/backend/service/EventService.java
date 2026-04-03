@@ -26,10 +26,10 @@ public class EventService {
     private final TripRepository tripRepository;
 
     public EventResponse createEvent(String itineraryId, String userId, CreateEventRequest request) {
-        Trip trip = tripRepository.findById(itineraryId)
-                .orElseThrow(() -> new RuntimeException("Trip not found"));
+        // Trip trip = tripRepository.findById(itineraryId)
+        //         .orElseThrow(() -> new RuntimeException("Trip not found"));
 
-        Itinerary itinerary = itineraryRepository.findByTrip(trip)
+        Itinerary itinerary = itineraryRepository.findById(itineraryId)
                 .orElseThrow(() -> new RuntimeException("Itinerary not found"));
 
         User createdBy = userRepository.findById(userId)
@@ -51,10 +51,10 @@ public class EventService {
     }
 
     public List<EventResponse> getEvents(String itineraryId) {
-        Trip trip = tripRepository.findById(itineraryId)
-                .orElseThrow(() -> new RuntimeException("Trip not found"));
+        // Trip trip = tripRepository.findById(itineraryId)
+        //         .orElseThrow(() -> new RuntimeException("Trip not found"));
 
-        Itinerary itinerary = itineraryRepository.findByTrip(trip)
+        Itinerary itinerary = itineraryRepository.findById(itineraryId)
                 .orElseThrow(() -> new RuntimeException("Itinerary not found"));
 
         return eventRepository.findByItinerary(itinerary)
