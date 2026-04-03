@@ -8,7 +8,11 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class TripMemberResponse {
     private String id;
-    private UserResponse User;
+    private String userId;
+    private String firstName;
+    private String lastName;
+    private String email;
+    private String avatarColor;
     private String status;
-    private LocalDateTime joinedAt;    
+    private LocalDateTime joinedAt;
 }
