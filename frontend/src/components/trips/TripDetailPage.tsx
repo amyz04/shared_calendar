@@ -94,12 +94,6 @@ export function TripDetailPage({
       {/* Availability tab */}
       {activeTab === "availability" && (
         <div>
-          <DateProposalSection
-            trip={trip}
-            members={members}
-            onConfirm={range => { setConfirmedRange(range); setActiveTab("itinerary"); }}
-          />
-
           <div className="flex gap-2 mb-5">
             <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold text-violet-500 font-syne border bg-violet-500/10 border-violet-500/30">
               <span className="text-[13px]">{trip.cover}</span>
@@ -183,6 +177,14 @@ export function TripDetailPage({
           </div>
 
           <BestWindowsPanel windows={windows} month={month} />
+
+          <div className="mt-6">
+            <DateProposalSection
+              trip={trip}
+              members={members}
+              onConfirm={range => { setConfirmedRange(range); setActiveTab("itinerary"); }}
+            />
+          </div>
         </div>
       )}
 
