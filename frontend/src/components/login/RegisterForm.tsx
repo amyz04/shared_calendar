@@ -32,7 +32,7 @@ export function RegisterForm({ onSubmit, loading, error }: RegisterFormProps) {
           <input
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
-            placeholder="Alex"
+            placeholder="First Name"
             className={inputCls}
           />
         </FormField>
@@ -40,7 +40,7 @@ export function RegisterForm({ onSubmit, loading, error }: RegisterFormProps) {
           <input
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
-            placeholder="Lee"
+            placeholder="Last Name"
             className={inputCls}
           />
         </FormField>
