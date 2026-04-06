@@ -3,6 +3,7 @@ import { ModeToggle, type AuthMode } from "./ModeToggle";
 import { LoginForm } from "./LoginForm";
 import { RegisterForm } from "./RegisterForm";
 import { GuestButton } from "./GuestButton";
+import { loginApi, registerApi, saveToken, saveUser } from "../../api/auth";
 
 interface AuthCardProps {
   onAuth: (mode: "user" | "guest") => void;
@@ -10,16 +11,68 @@ interface AuthCardProps {
 
 export function AuthCard({ onAuth }: AuthCardProps) {
   const [mode, setMode] = useState<AuthMode>("login");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleLogin(data: { email: string; password: string }) {
+    try {
+      setLoading(true);
+      setError("");
+      const res = await loginApi(data.email, data.password);
+      saveToken(res.token);
+      saveUser(res.user);
+      onAuth("user");
+    } catch (err: any) {
+      setError("Invalid email or password");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleRegister(data: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    password: string;
+    dob: string;
+  }) {
+    try {
+      setLoading(true);
+      setError("");
+      const res = await registerApi({
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        password: data.password,
+        dateOfBirth: data.dob || undefined,
+      });
+      saveToken(res.token);
+      saveUser(res.user);
+      onAuth("user");
+    } catch (err: any) {
+      setError(err.message || "Registration failed");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <div className="w-full max-w-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-7">
-      <ModeToggle mode={mode} onChange={setMode} />
+      <ModeToggle mode={mode} onChange={m => { setMode(m); setError(""); }} />
+
+      {error && mode === "login" && (
+        <p className="text-xs text-red-400 text-center mb-3 font-syne">{error}</p>
+      )}
 
       <div key={mode} className="animate-fade-slide">
         {mode === "login" ? (
-          <LoginForm onSubmit={() => onAuth("user")} />
+          <LoginForm onSubmit={handleLogin} loading={loading} />
         ) : (
-          <RegisterForm onSubmit={() => onAuth("user")} />
+          <RegisterForm
+            onSubmit={handleRegister}
+            loading={loading}
+            error={mode === "register" ? error : ""}
+          />
         )}
       </div>
 

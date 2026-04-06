@@ -10,9 +10,10 @@ interface LoginData {
 
 interface LoginFormProps {
   onSubmit: (data: LoginData) => void;
+  loading?: boolean;
 }
 
-export function LoginForm({ onSubmit }: LoginFormProps) {
+export function LoginForm({ onSubmit, loading }: LoginFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -37,9 +38,10 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
 
       <button
         onClick={() => onSubmit({ email, password })}
-        className="w-full py-2.5 mt-1 rounded-lg bg-violet-500 hover:bg-violet-600 text-white text-[13px] font-semibold font-syne border-none cursor-pointer transition-all"
+        disabled={loading}
+        className="w-full py-2.5 mt-1 rounded-lg bg-violet-500 hover:bg-violet-600 disabled:opacity-60 disabled:cursor-not-allowed text-white text-[13px] font-semibold font-syne border-none cursor-pointer transition-all"
       >
-        Sign in
+        {loading ? "Signing in..." : "Sign in"}
       </button>
     </div>
   );
