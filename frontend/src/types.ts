@@ -43,3 +43,11 @@ export interface CalendarSource {
 export type NavId = "trips" | "calendar" | "friends";
 
 export type AuthMode = "user" | "guest" | null;
+
+export interface RegisterData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  dob: string;
+}

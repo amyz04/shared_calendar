@@ -3,14 +3,7 @@ import { FormField } from "../form/FormField";
 import { PasswordInput } from "../form/PasswordInput";
 import { DateOfBirthInput } from "../form/DateOfBirthInput";
 import { inputCls } from "../ui/inputStyle";
-
-interface RegisterData {
-  firstName: string;
-  lastName: string;
-  email: string;
-  password: string;
-  dob: string;
-}
+import type { RegisterData } from "../../types";
 
 interface RegisterFormProps {
   onSubmit: (data: RegisterData) => void;
@@ -65,9 +58,7 @@ export function RegisterForm({ onSubmit, loading, error }: RegisterFormProps) {
         />
       </FormField>
 
-      {error && (
-        <p className="text-xs text-red-400 font-syne">{error}</p>
-      )}
+      {error && <p className="text-xs text-red-400 font-syne">{error}</p>}
 
       <button
         onClick={() => onSubmit({ firstName, lastName, email, password, dob })}

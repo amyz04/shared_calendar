@@ -4,6 +4,7 @@ import { LoginForm } from "./LoginForm";
 import { RegisterForm } from "./RegisterForm";
 import { GuestButton } from "./GuestButton";
 import { loginApi, registerApi, saveToken, saveUser } from "../../api/auth";
+import type { RegisterData } from "../../types";
 
 interface AuthCardProps {
   onAuth: (mode: "user" | "guest") => void;
@@ -29,13 +30,7 @@ export function AuthCard({ onAuth }: AuthCardProps) {
     }
   }
 
-  async function handleRegister(data: {
-    firstName: string;
-    lastName: string;
-    email: string;
-    password: string;
-    dob: string;
-  }) {
+  async function handleRegister(data: RegisterData) {
     try {
       setLoading(true);
       setError("");
@@ -58,10 +53,18 @@ export function AuthCard({ onAuth }: AuthCardProps) {
 
   return (
     <div className="w-full max-w-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-7">
-      <ModeToggle mode={mode} onChange={m => { setMode(m); setError(""); }} />
+      <ModeToggle
+        mode={mode}
+        onChange={(m) => {
+          setMode(m);
+          setError("");
+        }}
+      />
 
       {error && mode === "login" && (
-        <p className="text-xs text-red-400 text-center mb-3 font-syne">{error}</p>
+        <p className="text-xs text-red-400 text-center mb-3 font-syne">
+          {error}
+        </p>
       )}
 
       <div key={mode} className="animate-fade-slide">
