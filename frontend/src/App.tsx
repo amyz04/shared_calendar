@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
-import { INIT_TRIPS } from "./data";
 import type { Trip, CalendarSource, AuthMode } from "./types";
 import { Sidebar } from "./components/sidebar/Sidebar";
 import { LoginPage } from "./components/login/LoginPage";
@@ -9,12 +8,13 @@ import { TripDetailPage } from "./components/trips/TripDetailPage";
 import { FriendsPage } from "./components/friends/FriendsPage";
 import { ProfilePanel } from "./components/profile/ProfilePanel";
 import { NewTripModal } from "./components/trips/NewTripModal";
+import { getToken } from "./api/auth";
 
 export default function App() {
   const [isDark, setIsDark] = useState(true);
   const [authMode, setAuthMode] = useState<AuthMode>(null);
-  const [trips, setTrips] = useState<Trip[]>(INIT_TRIPS);
-  const [activeTripId, setActive] = useState(1);
+  const [trips, setTrips] = useState<Trip[]>([]);
+  const [activeTripId, setActive] = useState<number | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [calendars, setCalendars] = useState<CalendarSource[]>([]);
@@ -25,14 +25,23 @@ export default function App() {
     document.documentElement.classList.toggle("dark", isDark);
   }, [isDark]);
 
+  // Auto-login if token exists in localStorage
+  useEffect(() => {
+    const token = getToken();
+    if (token) {
+      setAuthMode("user");
+    }
+  }, []);
+
   const toggleTheme = () => setIsDark((d) => !d);
   const calendarsSynced = calendars.length > 0;
   const isGuest = authMode === "guest";
 
   const handleCreate = (data: Omit<Trip, "id" | "status">) => {
-    const id = Math.max(...trips.map((t) => t.id)) + 1;
-    setTrips((p) => [...p, { id, status: "planning", ...data }]);
-    setActive(id);
+    const newId = trips.length > 0 ? Math.max(...trips.map((t) => t.id)) + 1 : 1;
+    const newTrip: Trip = { id: newId, status: "planning", ...data };
+    setTrips((p) => [...p, newTrip]);
+    setActive(newId);
     navigate("/calendar");
   };
 

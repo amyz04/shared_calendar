@@ -1,6 +1,6 @@
 import type { Friend } from "../../types";
 import { Avatar, Pill } from "../ui";
-import { CURRENT_USER } from "../../data";
+import { getUser } from "../../api/auth";
 
 interface CalendarSyncCardProps {
   members: Friend[];
@@ -13,6 +13,8 @@ export function CalendarSyncCard({
   busyEventCounts,
   isGuest,
 }: CalendarSyncCardProps) {
+  const currentUser = getUser();
+
   return (
     <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden">
       <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
@@ -25,16 +27,7 @@ export function CalendarSyncCard({
         {isGuest ? (
           <div className="flex items-center gap-2.5 px-4 py-3">
             <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center shrink-0">
-              <svg
-                width={12}
-                height={12}
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                strokeLinecap="round"
-                className="text-slate-400"
-              >
+              <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" className="text-slate-400">
                 <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
                 <circle cx={12} cy={7} r={4} />
               </svg>
@@ -47,6 +40,7 @@ export function CalendarSyncCard({
           members.map((f, i) => {
             const total = busyEventCounts?.[f.id] ?? 0;
             const synced = i < members.length - 1;
+            const isYou = currentUser && f.email === currentUser.email;
             return (
               <div
                 key={f.id}
@@ -55,8 +49,7 @@ export function CalendarSyncCard({
                 <Avatar f={f} size={24} />
                 <div className="flex-1">
                   <div className="text-xs font-medium text-slate-900 dark:text-slate-100 font-syne">
-                    {f.name}
-                    {f.id === CURRENT_USER.id ? " (you)" : ""}
+                    {f.name}{isYou ? " (you)" : ""}
                   </div>
                   <div className="text-[10px] text-slate-400 dark:text-slate-600">
                     {synced ? `${total} events` : "Invite pending"}

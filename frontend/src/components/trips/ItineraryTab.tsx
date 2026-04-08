@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Trip } from "../../types";
-import { MONTHS, CURRENT_USER } from "../../data";
+import { MONTHS } from "../../data";
+import { getUser } from "../../api/auth";
 import { AddEventModal } from "./AddEventModal";
 import type { EventItem, ItineraryDay, ConfirmedRange } from "./tripUtils";
 import { getDatesInRange, fmtDate, fmtShortDate } from "./tripUtils";
@@ -22,7 +23,12 @@ export function ItineraryTab({ trip, confirmedRange }: ItineraryTabProps) {
     : [];
 
   function addEvent(date: string, e: Omit<EventItem, "id" | "createdBy">) {
-    const newEvent: EventItem = { ...e, id: crypto.randomUUID(), createdBy: CURRENT_USER.name };
+    const user = getUser();
+    const newEvent: EventItem = {
+      ...e,
+      id: crypto.randomUUID(),
+      createdBy: user ? `${user.firstName} ${user.lastName}` : "You",
+    };
     setItinerary(prev => {
       const existing = prev.find(d => d.date === date);
       if (existing) return prev.map(d => d.date === date ? { ...d, events: [...d.events, newEvent] } : d);
@@ -50,7 +56,11 @@ export function ItineraryTab({ trip, confirmedRange }: ItineraryTabProps) {
   return (
     <div>
       {showAddEvent && sel && (
-        <AddEventModal date={sel} onClose={() => setShowAddEvent(false)} onAdd={e => { addEvent(sel, e); setShowAddEvent(false); }} />
+        <AddEventModal
+          date={sel}
+          onClose={() => setShowAddEvent(false)}
+          onAdd={e => { addEvent(sel, e); setShowAddEvent(false); }}
+        />
       )}
 
       <div className="flex items-center gap-3 mb-5">

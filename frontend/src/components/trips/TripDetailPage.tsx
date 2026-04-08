@@ -8,13 +8,14 @@ import { BestWindowsPanel } from "../calendar/BestWindowsPanel";
 import { CalendarEmptyState } from "../calendar/CalendarEmptyState";
 import { DateProposalSection } from "./DateProposalSection";
 import { ItineraryTab } from "./ItineraryTab";
-import { FRIENDS, MONTHS } from "../../data";
+import { MONTHS } from "../../data";
 import { daysInMonth, firstDow, fmtH, genBusy, getFreeSlots, computeWindows } from "../../utils";
 import type { ConfirmedRange } from "./tripUtils";
+import { getUser } from "../../api/auth";
 
 interface TripDetailPageProps {
   trips: Trip[];
-  activeTripId: number;
+  activeTripId: number | null;
   onSelectTrip: (id: number) => void;
   onOpenProfile: () => void;
   calendarsSynced: boolean;
@@ -33,8 +34,38 @@ export function TripDetailPage({
   const [confirmedRange, setConfirmedRange] = useState<ConfirmedRange | null>(null);
   const [selDay, setSelDay] = useState<number | null>(null);
 
-  const trip = trips.find(t => t.id === activeTripId) || trips[0];
-  const members = trip.memberIds.map(id => FRIENDS.find(f => f.id === id)).filter(Boolean) as Friend[];
+  const loggedInUser = getUser();
+
+  const trip = trips.find(t => t.id === activeTripId) ?? trips[0] ?? null;
+
+  // No trip selected or no trips at all
+  if (!trip) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <div className="w-14 h-14 rounded-2xl bg-violet-500/10 flex items-center justify-center mb-4">
+          <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth={1.8} strokeLinecap="round">
+            <path d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+          </svg>
+        </div>
+        <div className="text-[15px] font-bold text-slate-900 dark:text-slate-100 font-syne mb-2">No trip selected</div>
+        <p className="text-[13px] text-slate-500 dark:text-slate-400 max-w-xs leading-relaxed">
+          Create a trip first then come back here to check availability.
+        </p>
+      </div>
+    );
+  }
+
+  // Build members from the logged in user only for now
+  // until friends API is connected — just show current user
+  const currentUserAsFriend: Friend = {
+    id: 1,
+    name: loggedInUser ? `${loggedInUser.firstName} ${loggedInUser.lastName}` : "You",
+    initials: loggedInUser ? `${loggedInUser.firstName?.[0]}${loggedInUser.lastName?.[0]}` : "U",
+    color: loggedInUser?.avatarColor ?? "#8b5cf6",
+    email: loggedInUser?.email ?? "",
+  };
+
+  const members: Friend[] = [currentUserAsFriend];
   const { year, month } = trip;
   const days = daysInMonth(year, month);
   const fd = firstDow(year, month);
@@ -73,10 +104,9 @@ export function TripDetailPage({
     <div>
       <div className="mb-5">
         <h1 className="text-[22px] font-bold text-slate-900 dark:text-slate-100 font-syne tracking-tight m-0">{trip.name}</h1>
-        <p className="text-[13px] text-slate-500 dark:text-slate-400 mt-1">{trip.dest} · {MONTHS[month]} {year} · {members.length} members</p>
+        <p className="text-[13px] text-slate-500 dark:text-slate-400 mt-1">{trip.dest} · {MONTHS[month]} {year} · {members.length} member{members.length !== 1 ? "s" : ""}</p>
       </div>
 
-      {/* Tab switcher */}
       <div className="flex gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl mb-6 w-fit">
         {TABS.map(tab => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id)}
@@ -91,7 +121,6 @@ export function TripDetailPage({
         ))}
       </div>
 
-      {/* Availability tab */}
       {activeTab === "availability" && (
         <div>
           <div className="flex gap-2 mb-5">
@@ -104,7 +133,7 @@ export function TripDetailPage({
 
           <div className="grid grid-cols-[1fr_316px] gap-5 mb-6">
             <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden">
-              <CalendarHeader month={month} year={year} subtitle={`${members.length} members · click a day to inspect`} />
+              <CalendarHeader month={month} year={year} subtitle={`${members.length} member${members.length !== 1 ? "s" : ""} · click a day to inspect`} />
               <CalendarGrid days={days} firstDow={fd} renderDay={d => {
                 const st = dayStatus(d); const col = statusColor(st); const isSel = selDay === d; const data = cells[d];
                 return (
@@ -188,7 +217,6 @@ export function TripDetailPage({
         </div>
       )}
 
-      {/* Trip tab */}
       {activeTab === "itinerary" && <ItineraryTab trip={trip} confirmedRange={confirmedRange} />}
     </div>
   );

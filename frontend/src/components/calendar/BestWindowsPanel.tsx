@@ -1,4 +1,4 @@
-import { MONTHS, FRIENDS } from "../../data";
+import { MONTHS } from "../../data";
 import { Pill } from "../ui";
 
 interface Window {
@@ -57,8 +57,7 @@ export function BestWindowsPanel({
             ))}
           </div>
           <p className="text-[13px] text-slate-500 dark:text-slate-400 leading-relaxed max-w-xs">
-            We'll automatically find the best dates once your group connects
-            their calendars.
+            We'll automatically find the best dates once your group connects their calendars.
           </p>
           {onSetupCalendar && (
             <button
@@ -72,8 +71,7 @@ export function BestWindowsPanel({
       ) : (
         <div className="grid grid-cols-3">
           {windows.map((w, i) => {
-            const col =
-              w.score > 80 ? "#8b5cf6" : w.score > 65 ? "#2dd4bf" : "#f59e0b";
+            const col = w.score > 80 ? "#8b5cf6" : w.score > 65 ? "#2dd4bf" : "#f59e0b";
             const isTop = i === 0;
             return (
               <div
@@ -103,39 +101,20 @@ export function BestWindowsPanel({
                     </div>
                   </div>
                   <div
-                    style={{
-                      backgroundColor: `${col}20`,
-                      borderColor: col,
-                      color: col,
-                    }}
+                    style={{ backgroundColor: `${col}20`, borderColor: col, color: col }}
                     className="w-8 h-8 rounded-full border-2 flex items-center justify-center text-[11px] font-bold font-syne shrink-0"
                   >
                     {w.score}
                   </div>
                 </div>
-                <div
-                  className={`flex flex-wrap gap-1 ${w.conflicts.length > 0 ? "mb-2" : ""}`}
-                >
-                  {w.freeNames.map((n: string) => {
-                    const f = FRIENDS.find((x) => x.name.startsWith(n));
-                    return f ? (
-                      <Pill key={n} color={f.color}>
-                        {n}
-                      </Pill>
-                    ) : null;
-                  })}
+                <div className={`flex flex-wrap gap-1 ${w.conflicts.length > 0 ? "mb-2" : ""}`}>
+                  {w.freeNames.map((n: string) => (
+                    <Pill key={n} color="#8b5cf6">{n}</Pill>
+                  ))}
                 </div>
                 {w.conflicts.length > 0 && (
                   <div className="text-[11px] text-red-400 flex items-center gap-1">
-                    <svg
-                      width={10}
-                      height={10}
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                      strokeLinecap="round"
-                    >
+                    <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
                       <circle cx={12} cy={12} r={10} />
                       <path d="M12 8v4M12 16h.01" />
                     </svg>

@@ -1,29 +1,6 @@
-import type { Friend, Trip, NavId } from "./types";
+import type { Trip, NavId } from "./types";
 
-export const FRIENDS: Friend[] = [
-  {
-    id: 1,
-    name: "Alex Lee",
-    initials: "AL",
-    color: "#8b5cf6",
-    email: "alex@email.com",
-  },
-];
-
-export const CURRENT_USER: Friend = FRIENDS[0];
-
-export const INIT_TRIPS: Trip[] = [
-  {
-    id: 1,
-    name: "Portugal Summer",
-    dest: "Lisbon",
-    cover: "🇵🇹",
-    year: 2025,
-    month: 5,
-    memberIds: [1, 2, 3, 4, 5],
-    status: "planning",
-  },
-];
+export const INIT_TRIPS: Trip[] = [];
 
 export const MONTHS = [
   "January",

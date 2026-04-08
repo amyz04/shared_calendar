@@ -1,7 +1,6 @@
 import { useState } from "react";
 import type { Trip, Friend } from "../../types";
-import { Avatar } from "../ui";
-import { FRIENDS, CURRENT_USER } from "../../data";
+import { getUser } from "../../api/auth";
 import type { DateProposal, ConfirmedRange } from "./tripUtils";
 import { getDatesInRange, fmtDate } from "./tripUtils";
 
@@ -17,16 +16,21 @@ export function DateProposalSection({ trip, members, onConfirm }: DateProposalSe
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
+  const user = getUser();
+  const currentUserName = user ? `${user.firstName} ${user.lastName}` : "You";
+  const currentUserColor = user?.avatarColor ?? "#8b5cf6";
+  const currentUserInitials = user ? `${user.firstName?.[0]}${user.lastName?.[0]}` : "U";
+
   const is = "w-full px-3 py-2 rounded-lg text-[13px] bg-slate-100 dark:bg-slate-700/60 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-slate-100 outline-none font-syne";
 
   function propose() {
     if (!startDate || !endDate) return;
     const p: DateProposal = {
       id: crypto.randomUUID(),
-      proposedBy: CURRENT_USER.name,
+      proposedBy: currentUserName,
       startDate,
       endDate,
-      votes: [{ userId: CURRENT_USER.name, vote: "agree" }],
+      votes: [{ userId: currentUserName, vote: "agree" }],
     };
     setProposals(prev => [...prev, p]);
     setShowForm(false);
@@ -36,12 +40,12 @@ export function DateProposalSection({ trip, members, onConfirm }: DateProposalSe
   function vote(proposalId: string, v: "agree" | "disagree") {
     setProposals(prev => prev.map(p => {
       if (p.id !== proposalId) return p;
-      const filtered = p.votes.filter(x => x.userId !== CURRENT_USER.name);
-      return { ...p, votes: [...filtered, { userId: CURRENT_USER.name, vote: v }] };
+      const filtered = p.votes.filter(x => x.userId !== currentUserName);
+      return { ...p, votes: [...filtered, { userId: currentUserName, vote: v }] };
     }));
   }
 
-  const myVote = (p: DateProposal) => p.votes.find(v => v.userId === CURRENT_USER.name)?.vote;
+  const myVote = (p: DateProposal) => p.votes.find(v => v.userId === currentUserName)?.vote;
   const agreeCount = (p: DateProposal) => p.votes.filter(v => v.vote === "agree").length;
 
   return (
@@ -113,24 +117,32 @@ export function DateProposalSection({ trip, members, onConfirm }: DateProposalSe
                 </div>
 
                 <div className="flex items-center gap-2">
+                  {/* Avatar votes — now using initials instead of Avatar component */}
                   <div className="flex -space-x-1.5 flex-1">
-                    {p.votes.map(v => {
-                      const f = FRIENDS.find(x => x.name === v.userId) || CURRENT_USER;
-                      return (
-                        <div key={v.userId} className="relative">
-                          <Avatar f={f} size={22} />
-                          <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border border-white dark:border-slate-800 flex items-center justify-center ${v.vote === "agree" ? "bg-emerald-500" : "bg-red-400"}`}>
-                            {v.vote === "agree"
-                              ? <svg width={6} height={6} viewBox="0 0 10 10" fill="none" stroke="#fff" strokeWidth={2}><path d="M2 5l2 2 4-4" /></svg>
-                              : <svg width={6} height={6} viewBox="0 0 10 10" fill="none" stroke="#fff" strokeWidth={2}><path d="M3 3l4 4M7 3l-4 4" /></svg>
-                            }
-                          </div>
+                    {p.votes.map(v => (
+                      <div key={v.userId} className="relative">
+                        <div
+                          style={{
+                            width: 22, height: 22, borderRadius: "50%",
+                            background: `${currentUserColor}22`,
+                            border: `1.5px solid ${currentUserColor}55`,
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            fontSize: 8, fontWeight: 700, color: currentUserColor,
+                          }}
+                        >
+                          {currentUserInitials}
                         </div>
-                      );
-                    })}
+                        <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border border-white dark:border-slate-800 flex items-center justify-center ${v.vote === "agree" ? "bg-emerald-500" : "bg-red-400"}`}>
+                          {v.vote === "agree"
+                            ? <svg width={6} height={6} viewBox="0 0 10 10" fill="none" stroke="#fff" strokeWidth={2}><path d="M2 5l2 2 4-4" /></svg>
+                            : <svg width={6} height={6} viewBox="0 0 10 10" fill="none" stroke="#fff" strokeWidth={2}><path d="M3 3l4 4M7 3l-4 4" /></svg>
+                          }
+                        </div>
+                      </div>
+                    ))}
                   </div>
 
-                  {p.proposedBy !== CURRENT_USER.name && !allAgreed && (
+                  {p.proposedBy !== currentUserName && !allAgreed && (
                     <div className="flex gap-1.5">
                       <button onClick={() => vote(p.id, "agree")}
                         className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold font-syne border transition-all ${mv === "agree" ? "bg-emerald-500 text-white border-emerald-500" : "bg-transparent text-emerald-600 border-emerald-300 dark:border-emerald-700 hover:bg-emerald-500/10"}`}>
