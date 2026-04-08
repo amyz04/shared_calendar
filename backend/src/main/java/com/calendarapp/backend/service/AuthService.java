@@ -4,13 +4,16 @@ import com.calendarapp.backend.dto.request.LoginRequest;
 import com.calendarapp.backend.dto.request.RegisterRequest;
 import com.calendarapp.backend.dto.response.AuthResponse;
 import com.calendarapp.backend.dto.response.UserResponse;
+import com.calendarapp.backend.entity.Friendship;
 import com.calendarapp.backend.entity.User;
+import com.calendarapp.backend.repository.FriendshipRepository;
 import com.calendarapp.backend.repository.UserRepository;
-
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -19,6 +22,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final FriendshipRepository friendshipRepository;
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
@@ -33,8 +37,16 @@ public class AuthService {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setDateOfBirth(request.getDateOfBirth());
         user.setAvatarColor(request.getAvatarColor());
-
         userRepository.save(user);
+
+        // Link any pending friendship invites sent to this email
+        List<Friendship> pending = friendshipRepository.findByInviteeEmail(request.getEmail());
+        for (Friendship f : pending) {
+            if (f.getInvitee() == null) {
+                f.setInvitee(user);
+                friendshipRepository.save(f);
+            }
+        }
 
         String token = jwtUtil.generateToken(user.getEmail());
         return new AuthResponse(token, mapToUserResponse(user));

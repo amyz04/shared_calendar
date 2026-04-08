@@ -9,7 +9,8 @@ import java.time.LocalDateTime;
 public class FriendshipResponse {
     private String id;
     private UserResponse sender;
-    private UserResponse invitee;
+    private UserResponse invitee; // null if invitee has no account yet
+    private String inviteeEmail;
     private String status;
     private LocalDateTime createdAt;
 }

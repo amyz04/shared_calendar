@@ -18,11 +18,23 @@ public class FriendshipController {
 
     private final FriendshipService friendshipService;
 
-    @PostMapping("/{userId}")
-    public ResponseEntity<FriendshipResponse> sendRequest(
+    @PostMapping("/invite")
+    public ResponseEntity<FriendshipResponse> inviteByEmail(
             @AuthenticationPrincipal User currentUser,
-            @PathVariable String userId) {
-        return ResponseEntity.ok(friendshipService.sendRequest(currentUser.getId(), userId));
+            @RequestParam String email) {
+        return ResponseEntity.ok(friendshipService.inviteByEmail(currentUser.getId(), email));
+    }
+
+    @GetMapping("/sent")
+    public ResponseEntity<List<FriendshipResponse>> getSentInvites(
+            @AuthenticationPrincipal User currentUser) {
+        return ResponseEntity.ok(friendshipService.getSentInvites(currentUser.getId()));
+    }
+
+    @GetMapping
+    public ResponseEntity<List<FriendshipResponse>> getFriends(
+            @AuthenticationPrincipal User currentUser) {
+        return ResponseEntity.ok(friendshipService.getFriends(currentUser.getId()));
     }
 
     @PutMapping("/{friendshipId}")
@@ -31,12 +43,6 @@ public class FriendshipController {
             @PathVariable String friendshipId,
             @RequestBody UpdateFriendshipRequest request) {
         return ResponseEntity.ok(friendshipService.updateStatus(friendshipId, request.getStatus()));
-    }
-
-    @GetMapping
-    public ResponseEntity<List<FriendshipResponse>> getFriends(
-            @AuthenticationPrincipal User currentUser) {
-        return ResponseEntity.ok(friendshipService.getFriends(currentUser.getId()));
     }
 
     @DeleteMapping("/{friendshipId}")
