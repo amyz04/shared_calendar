@@ -1,3 +1,34 @@
+export interface User {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  avatarColor: string;
+  dateOfBirth?: string;
+  createdAt?: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  user: User;
+}
+
+export interface LoginData {
+  email: string;
+  password: string;
+}
+
+export interface TripMember {
+  id: string;
+  userId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  avatarColor: string;
+  status: "PENDING" | "CONFIRMED" | "REJECTED";
+  joinedAt: string;
+}
+
 export interface Friend {
   id: number;
   name: string;
@@ -12,14 +43,32 @@ export interface TimeBlock {
 }
 
 export interface Trip {
-  id: number;
+  id: string;
   name: string;
-  dest: string;
+  destination: string;
   cover: string;
+  inviteToken: string;
+  owner: User;
+  members: TripMember[];
+  itineraryId: string | null;
+  startDate: string;
+  endDate: string;
+  status: "PROPOSED" | "CONFIRMED" | "CANCELLED";
+  createdAt: string;
+  // frontend-only fields for calendar display
   year: number;
   month: number;
+  dest: string;
   memberIds: number[];
-  status: "planning" | "confirmed";
+}
+
+export interface CreateTripData {
+  name: string;
+  destination: string;
+  cover: string;
+  startDate: string;
+  endDate: string;
+  details?: string;
 }
 
 export interface BusyMap {
@@ -49,5 +98,5 @@ export interface RegisterData {
   lastName: string;
   email: string;
   password: string;
-  dob: string;
+  dateOfBirth: string;
 }

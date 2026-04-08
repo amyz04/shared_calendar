@@ -1,6 +1,9 @@
-import { useState, useEffect } from "react";
-import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
-import type { Trip, CalendarSource, AuthMode } from "./types";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useAuth } from "./context/AuthContext";
+import { useTheme } from "./context/ThemeContext";
+import { useTrips } from "./context/TripContext";
+import { useCalendars } from "./context/CalendarContext";
+import { useModal } from "./hooks/useModal";
 import { Sidebar } from "./components/sidebar/Sidebar";
 import { LoginPage } from "./components/login/LoginPage";
 import { TripsPage } from "./components/trips/TripsPage";
@@ -8,49 +11,30 @@ import { TripDetailPage } from "./components/trips/TripDetailPage";
 import { FriendsPage } from "./components/friends/FriendsPage";
 import { ProfilePanel } from "./components/profile/ProfilePanel";
 import { NewTripModal } from "./components/trips/NewTripModal";
-import { getToken } from "./api/auth";
+import { StatusBar } from "./components/ui/StatusBar";
+import type { CreateTripData } from "./types";
+import { useNavigate } from "react-router-dom";
 
 export default function App() {
-  const [isDark, setIsDark] = useState(true);
-  const [authMode, setAuthMode] = useState<AuthMode>(null);
-  const [trips, setTrips] = useState<Trip[]>([]);
-  const [activeTripId, setActive] = useState<number | null>(null);
-  const [showModal, setShowModal] = useState(false);
-  const [showProfile, setShowProfile] = useState(false);
-  const [calendars, setCalendars] = useState<CalendarSource[]>([]);
-
+  const { isAuthenticated, authMode, setAuthMode } = useAuth();
+  const { isDark, toggle: toggleTheme } = useTheme();
+  const { trips, loading, activeTripId, setActiveTripId, createTrip } =
+    useTrips();
+  const { calendars, calendarsSynced, addCalendar, removeCalendar } =
+    useCalendars();
+  const tripModal = useModal();
+  const profileModal = useModal();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", isDark);
-  }, [isDark]);
-
-  // Auto-login if token exists in localStorage
-  useEffect(() => {
-    const token = getToken();
-    if (token) {
-      setAuthMode("user");
-    }
-  }, []);
-
-  const toggleTheme = () => setIsDark((d) => !d);
-  const calendarsSynced = calendars.length > 0;
   const isGuest = authMode === "guest";
 
-  const handleCreate = (data: Omit<Trip, "id" | "status">) => {
-    const newId = trips.length > 0 ? Math.max(...trips.map((t) => t.id)) + 1 : 1;
-    const newTrip: Trip = { id: newId, status: "planning", ...data };
-    setTrips((p) => [...p, newTrip]);
-    setActive(newId);
+  async function handleCreate(data: CreateTripData) {
+    const newTrip = await createTrip(data);
+    tripModal.close();
     navigate("/calendar");
-  };
+  }
 
-  const handleAuth = (mode: "user" | "guest") => {
-    setAuthMode(mode);
-    navigate("/trips");
-  };
-
-  if (!authMode) {
+  if (!isAuthenticated && authMode !== "guest") {
     return (
       <Routes>
         <Route
@@ -59,7 +43,10 @@ export default function App() {
             <LoginPage
               isDark={isDark}
               toggleTheme={toggleTheme}
-              onAuth={handleAuth}
+              onAuth={(mode) => {
+                setAuthMode(mode);
+                navigate("/trips");
+              }}
             />
           }
         />
@@ -70,29 +57,24 @@ export default function App() {
 
   return (
     <div className="flex h-screen overflow-hidden">
-      {showModal && !isGuest && (
-        <NewTripModal
-          onClose={() => setShowModal(false)}
-          onCreate={handleCreate}
-        />
+      {tripModal.isOpen && !isGuest && (
+        <NewTripModal onClose={tripModal.close} onCreate={handleCreate} />
       )}
-      {showProfile && !isGuest && (
+      {profileModal.isOpen && !isGuest && (
         <ProfilePanel
-          onClose={() => setShowProfile(false)}
+          onClose={profileModal.close}
           calendars={calendars}
-          onAddCalendar={(c) => setCalendars((p) => [...p, c])}
-          onRemoveCalendar={(id) =>
-            setCalendars((p) => p.filter((c) => c.id !== id))
-          }
+          onAddCalendar={addCalendar}
+          onRemoveCalendar={removeCalendar}
         />
       )}
 
       <Sidebar
         trips={trips}
         activeTripId={activeTripId}
-        onSelectTrip={setActive}
-        onNewTrip={() => !isGuest && setShowModal(true)}
-        onOpenProfile={() => !isGuest && setShowProfile(true)}
+        onSelectTrip={setActiveTripId}
+        onNewTrip={() => !isGuest && tripModal.open()}
+        onOpenProfile={() => !isGuest && profileModal.open()}
         isDark={isDark}
         toggleTheme={toggleTheme}
         isGuest={isGuest}
@@ -103,21 +85,7 @@ export default function App() {
       />
 
       <main className="flex-1 overflow-y-auto p-8 bg-slate-100 dark:bg-slate-900">
-        <div className="flex justify-end mb-8 gap-2.5">
-          {isGuest && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-400/15 border border-amber-400/40 text-[11px] text-amber-400 font-syne">
-              <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                <circle cx={12} cy={12} r={3} />
-              </svg>
-              Guest mode
-            </div>
-          )}
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[11px] text-slate-500 dark:text-slate-400 font-syne">
-            <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
-            Spring Boot · connected
-          </div>
-        </div>
+        <StatusBar isGuest={isGuest} loading={loading} />
 
         <Routes>
           <Route
@@ -125,8 +93,8 @@ export default function App() {
             element={
               <TripsPage
                 trips={trips}
-                onSelectTrip={setActive}
-                onNewTrip={() => setShowModal(true)}
+                onSelectTrip={setActiveTripId}
+                onNewTrip={tripModal.open}
                 isGuest={isGuest}
               />
             }
@@ -137,9 +105,9 @@ export default function App() {
               <TripDetailPage
                 trips={trips}
                 activeTripId={activeTripId}
-                onSelectTrip={setActive}
+                onSelectTrip={setActiveTripId}
                 onOpenProfile={() =>
-                  isGuest ? setAuthMode(null) : setShowProfile(true)
+                  isGuest ? setAuthMode(null) : profileModal.open()
                 }
                 calendarsSynced={calendarsSynced}
                 isGuest={isGuest}

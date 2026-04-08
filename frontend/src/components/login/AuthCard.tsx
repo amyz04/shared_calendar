@@ -5,6 +5,7 @@ import { RegisterForm } from "./RegisterForm";
 import { GuestButton } from "./GuestButton";
 import { loginApi, registerApi, saveToken, saveUser } from "../../api/auth";
 import type { RegisterData } from "../../types";
+import { useAuth } from "../../context/AuthContext";
 
 interface AuthCardProps {
   onAuth: (mode: "user" | "guest") => void;
@@ -14,14 +15,13 @@ export function AuthCard({ onAuth }: AuthCardProps) {
   const [mode, setMode] = useState<AuthMode>("login");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
+  const { login } = useAuth();
   async function handleLogin(data: { email: string; password: string }) {
     try {
       setLoading(true);
       setError("");
       const res = await loginApi(data.email, data.password);
-      saveToken(res.token);
-      saveUser(res.user);
+      login(res.token, res.user);
       onAuth("user");
     } catch (err: any) {
       setError("Invalid email or password");
@@ -39,10 +39,9 @@ export function AuthCard({ onAuth }: AuthCardProps) {
         lastName: data.lastName,
         email: data.email,
         password: data.password,
-        dateOfBirth: data.dob || undefined,
+        dateOfBirth: data.dateOfBirth,
       });
-      saveToken(res.token);
-      saveUser(res.user);
+      login(res.token, res.user);
       onAuth("user");
     } catch (err: any) {
       setError(err.message || "Registration failed");

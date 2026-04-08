@@ -16,7 +16,7 @@ export function RegisterForm({ onSubmit, loading, error }: RegisterFormProps) {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [dob, setDob] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
 
   return (
     <div className="flex flex-col gap-3">
@@ -39,7 +39,7 @@ export function RegisterForm({ onSubmit, loading, error }: RegisterFormProps) {
         </FormField>
       </div>
 
-      <DateOfBirthInput value={dob} onChange={setDob} />
+      <DateOfBirthInput value={dateOfBirth} onChange={setDateOfBirth} />
 
       <FormField label="Email">
         <input
@@ -61,7 +61,9 @@ export function RegisterForm({ onSubmit, loading, error }: RegisterFormProps) {
       {error && <p className="text-xs text-red-400 font-syne">{error}</p>}
 
       <button
-        onClick={() => onSubmit({ firstName, lastName, email, password, dob })}
+        onClick={() =>
+          onSubmit({ firstName, lastName, email, password, dateOfBirth })
+        }
         disabled={loading}
         className="w-full py-2.5 mt-1 rounded-lg bg-violet-500 hover:bg-violet-600 disabled:opacity-60 disabled:cursor-not-allowed text-white text-[13px] font-semibold font-syne border-none cursor-pointer transition-all"
       >
