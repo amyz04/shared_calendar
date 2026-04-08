@@ -12,6 +12,7 @@ interface ProfilePanelProps {
   calendars: CalendarSource[];
   onAddCalendar: (c: CalendarSource) => void;
   onRemoveCalendar: (id: string) => void;
+  onLogout: () => void;
 }
 
 export function ProfilePanel({
@@ -19,13 +20,13 @@ export function ProfilePanel({
   calendars,
   onAddCalendar,
   onRemoveCalendar,
+  onLogout,
 }: ProfilePanelProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [tab, setTab] = useState<ProfileTab>("calendars");
   const [dragOver, setDragOver] = useState(false);
   const [connecting, setConnecting] = useState<string | null>(null);
 
-  // ← load real user from localStorage
   const savedUser = getUser();
   const [firstName, setFirstName] = useState(savedUser?.firstName ?? "");
   const [lastName, setLastName] = useState(savedUser?.lastName ?? "");
@@ -63,24 +64,11 @@ export function ProfilePanel({
       <div className="fixed inset-0 bg-black/35 z-40" onClick={onClose} />
       <div className="fixed top-0 right-0 h-full w-[400px] bg-slate-50 dark:bg-slate-900 border-l border-slate-200 dark:border-slate-700 z-50 flex flex-col">
         <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between shrink-0">
-          <span className="text-base font-bold text-slate-900 dark:text-slate-100 font-syne">
-            Profile
-          </span>
-          <button
-            onClick={onClose}
-            className="bg-transparent border-none text-slate-500 text-xl cursor-pointer leading-none hover:text-slate-900 dark:hover:text-slate-100"
-          >
-            ×
-          </button>
+          <span className="text-base font-bold text-slate-900 dark:text-slate-100 font-syne">Profile</span>
+          <button onClick={onClose} className="bg-transparent border-none text-slate-500 text-xl cursor-pointer leading-none hover:text-slate-900 dark:hover:text-slate-100">×</button>
         </div>
 
-        <ProfileAvatar
-          firstName={firstName}
-          lastName={lastName}
-          email={email}
-          avatarColor={avatarColor}
-          onColorChange={setAvatarColor}
-        />
+        <ProfileAvatar firstName={firstName} lastName={lastName} email={email} avatarColor={avatarColor} onColorChange={setAvatarColor} />
         <ProfileTabs tab={tab} onChange={setTab} />
 
         <div className="flex-1 overflow-y-auto px-5 py-4">
@@ -92,22 +80,13 @@ export function ProfilePanel({
                   [0, "Friends", "#2dd4bf"],
                   [calendars.length, "Calendars", "#4ade80"],
                 ].map(([v, l, c]) => (
-                  <div
-                    key={l as string}
-                    className="text-center py-3.5 px-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
-                  >
-                    <div style={{ color: c as string }} className="text-[22px] font-bold font-syne">
-                      {v as number}
-                    </div>
-                    <div className="text-[11px] text-slate-400 dark:text-slate-600 mt-0.5">
-                      {l as string}
-                    </div>
+                  <div key={l as string} className="text-center py-3.5 px-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                    <div style={{ color: c as string }} className="text-[22px] font-bold font-syne">{v as number}</div>
+                    <div className="text-[11px] text-slate-400 dark:text-slate-600 mt-0.5">{l as string}</div>
                   </div>
                 ))}
               </div>
-              <div className="text-[11px] font-semibold text-slate-400 dark:text-slate-600 tracking-widest font-syne mb-2.5">
-                UPCOMING
-              </div>
+              <div className="text-[11px] font-semibold text-slate-400 dark:text-slate-600 tracking-widest font-syne mb-2.5">UPCOMING</div>
               {INIT_TRIPS.map((t) => (
                 <div key={t.id} className="flex items-center gap-3 py-2.5 border-b border-slate-200 dark:border-slate-700">
                   <span className="text-xl">{t.cover}</span>
@@ -123,9 +102,7 @@ export function ProfilePanel({
 
           {tab === "calendars" && (
             <div>
-              <div className="text-[11px] font-semibold text-slate-400 dark:text-slate-600 tracking-widest font-syne mb-2.5">
-                CONNECT ACCOUNT
-              </div>
+              <div className="text-[11px] font-semibold text-slate-400 dark:text-slate-600 tracking-widest font-syne mb-2.5">CONNECT ACCOUNT</div>
               <div className="flex flex-col gap-2 mb-5">
                 {(["google", "apple"] as const).map((p) => {
                   const has = calendars.some((c) => c.source === p);
@@ -133,27 +110,17 @@ export function ProfilePanel({
                   const label = p === "google" ? "Google Calendar" : "Apple Calendar";
                   const color = p === "google" ? "#4285f4" : "#888";
                   return (
-                    <button
-                      key={p}
-                      onClick={() => !has && handleConnect(p)}
-                      disabled={has || loading}
+                    <button key={p} onClick={() => !has && handleConnect(p)} disabled={has || loading}
                       style={{ borderColor: has ? `${color}40` : undefined }}
                       className={`flex items-center gap-3 px-3.5 py-3 rounded-xl bg-slate-100 dark:bg-slate-800 border text-left transition-all
                         ${!has && !loading ? "border-slate-200 dark:border-slate-700 cursor-pointer hover:border-slate-300 dark:hover:border-slate-600" : "cursor-default border-slate-200 dark:border-slate-700"}`}
                     >
-                      <div
-                        style={{ backgroundColor: `${color}18`, borderColor: `${color}30`, color }}
-                        className="w-8 h-8 rounded-lg border flex items-center justify-center shrink-0 text-[13px] font-bold font-syne"
-                      >
+                      <div style={{ backgroundColor: `${color}18`, borderColor: `${color}30`, color }} className="w-8 h-8 rounded-lg border flex items-center justify-center shrink-0 text-[13px] font-bold font-syne">
                         {p === "google" ? "G" : ""}
                       </div>
                       <div className="flex-1">
-                        <div style={{ color: has ? color : undefined }} className={`text-[13px] font-medium font-syne ${!has ? "text-slate-900 dark:text-slate-100" : ""}`}>
-                          {label}
-                        </div>
-                        <div className="text-[11px] text-slate-400 dark:text-slate-600">
-                          {has ? "Connected" : loading ? "Connecting..." : "Click to connect"}
-                        </div>
+                        <div style={{ color: has ? color : undefined }} className={`text-[13px] font-medium font-syne ${!has ? "text-slate-900 dark:text-slate-100" : ""}`}>{label}</div>
+                        <div className="text-[11px] text-slate-400 dark:text-slate-600">{has ? "Connected" : loading ? "Connecting..." : "Click to connect"}</div>
                       </div>
                       {has ? <Pill color="#4ade80">live</Pill> : loading ? (
                         <div className="w-3.5 h-3.5 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
@@ -165,9 +132,7 @@ export function ProfilePanel({
                 })}
               </div>
 
-              <div className="text-[11px] font-semibold text-slate-400 dark:text-slate-600 tracking-widest font-syne mb-2.5">
-                IMPORT .ICS FILE
-              </div>
+              <div className="text-[11px] font-semibold text-slate-400 dark:text-slate-600 tracking-widest font-syne mb-2.5">IMPORT .ICS FILE</div>
               <div
                 onClick={() => fileRef.current?.click()}
                 onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
@@ -228,7 +193,16 @@ export function ProfilePanel({
               <button className="w-full py-2.5 rounded-lg bg-violet-500 hover:bg-violet-600 text-white text-[13px] font-semibold font-syne border-none cursor-pointer transition-all mb-6">
                 Save changes
               </button>
-              <div className="pt-5 border-t border-slate-200 dark:border-slate-700">
+              <div className="pt-5 border-t border-slate-200 dark:border-slate-700 flex flex-col gap-2">
+                <button
+                  onClick={onLogout}
+                  className="w-full py-2.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 text-[13px] font-syne cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex items-center justify-center gap-2"
+                >
+                  <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
+                    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" />
+                  </svg>
+                  Log out
+                </button>
                 <button className="w-full py-2.5 rounded-lg bg-red-400/10 border border-red-400/30 text-red-400 text-[13px] font-syne cursor-pointer hover:bg-red-400/20 transition-all">
                   Delete account
                 </button>

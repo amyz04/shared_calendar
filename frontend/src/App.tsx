@@ -8,7 +8,7 @@ import { TripDetailPage } from "./components/trips/TripDetailPage";
 import { FriendsPage } from "./components/friends/FriendsPage";
 import { ProfilePanel } from "./components/profile/ProfilePanel";
 import { NewTripModal } from "./components/trips/NewTripModal";
-import { getToken } from "./api/auth";
+import { getToken, removeToken, removeUser } from "./api/auth";
 
 export default function App() {
   const [isDark, setIsDark] = useState(true);
@@ -25,12 +25,9 @@ export default function App() {
     document.documentElement.classList.toggle("dark", isDark);
   }, [isDark]);
 
-  // Auto-login if token exists in localStorage
   useEffect(() => {
     const token = getToken();
-    if (token) {
-      setAuthMode("user");
-    }
+    if (token) setAuthMode("user");
   }, []);
 
   const toggleTheme = () => setIsDark((d) => !d);
@@ -48,6 +45,17 @@ export default function App() {
   const handleAuth = (mode: "user" | "guest") => {
     setAuthMode(mode);
     navigate("/trips");
+  };
+
+  const handleLogout = () => {
+    removeToken();
+    removeUser();
+    setAuthMode(null);
+    setTrips([]);
+    setActive(null);
+    setCalendars([]);
+    setShowProfile(false);
+    navigate("/login");
   };
 
   if (!authMode) {
@@ -81,9 +89,8 @@ export default function App() {
           onClose={() => setShowProfile(false)}
           calendars={calendars}
           onAddCalendar={(c) => setCalendars((p) => [...p, c])}
-          onRemoveCalendar={(id) =>
-            setCalendars((p) => p.filter((c) => c.id !== id))
-          }
+          onRemoveCalendar={(id) => setCalendars((p) => p.filter((c) => c.id !== id))}
+          onLogout={handleLogout}
         />
       )}
 
@@ -96,10 +103,8 @@ export default function App() {
         isDark={isDark}
         toggleTheme={toggleTheme}
         isGuest={isGuest}
-        onSignIn={() => {
-          setAuthMode(null);
-          navigate("/login");
-        }}
+        onSignIn={() => { setAuthMode(null); navigate("/login"); }}
+        onLogout={handleLogout}
       />
 
       <main className="flex-1 overflow-y-auto p-8 bg-slate-100 dark:bg-slate-900">
@@ -120,36 +125,9 @@ export default function App() {
         </div>
 
         <Routes>
-          <Route
-            path="/trips"
-            element={
-              <TripsPage
-                trips={trips}
-                onSelectTrip={setActive}
-                onNewTrip={() => setShowModal(true)}
-                isGuest={isGuest}
-              />
-            }
-          />
-          <Route
-            path="/calendar"
-            element={
-              <TripDetailPage
-                trips={trips}
-                activeTripId={activeTripId}
-                onSelectTrip={setActive}
-                onOpenProfile={() =>
-                  isGuest ? setAuthMode(null) : setShowProfile(true)
-                }
-                calendarsSynced={calendarsSynced}
-                isGuest={isGuest}
-              />
-            }
-          />
-          <Route
-            path="/friends"
-            element={<FriendsPage trips={trips} isGuest={isGuest} />}
-          />
+          <Route path="/trips" element={<TripsPage trips={trips} onSelectTrip={setActive} onNewTrip={() => setShowModal(true)} isGuest={isGuest} />} />
+          <Route path="/calendar" element={<TripDetailPage trips={trips} activeTripId={activeTripId} onSelectTrip={setActive} onOpenProfile={() => isGuest ? setAuthMode(null) : setShowProfile(true)} calendarsSynced={calendarsSynced} isGuest={isGuest} />} />
+          <Route path="/friends" element={<FriendsPage trips={trips} isGuest={isGuest} />} />
           <Route path="/" element={<Navigate to="/trips" replace />} />
           <Route path="*" element={<Navigate to="/trips" replace />} />
         </Routes>
