@@ -17,6 +17,7 @@ export function NewTripModal({ onClose, onCreate }: NewTripModalProps) {
   const [year, setYear] = useState(2026);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [details, setDetails] = useState<string>("");
 
   const user = getUser();
   const ok = name.trim() !== "" && destination.trim() !== "";
@@ -36,7 +37,7 @@ export function NewTripModal({ onClose, onCreate }: NewTripModalProps) {
       setLoading(true);
       setError(null);
       const { startDate, endDate } = buildDates();
-      await onCreate({ name, destination, cover, startDate, endDate });
+      await onCreate({ name, destination, cover, startDate, endDate, details });
     } catch (err: any) {
       setError(err.message || "Failed to create trip");
     } finally {
@@ -86,6 +87,7 @@ export function NewTripModal({ onClose, onCreate }: NewTripModalProps) {
           [
             ["Trip name", name, setName, "e.g. Portugal Summer"],
             ["Destination", destination, setDestination, "e.g. Lisbon"],
+            ["Details", details, setDetails, "e.g. Escape room!"],
           ] as const
         ).map(([l, v, s, p]) => (
           <div key={l} className="mb-3.5">
