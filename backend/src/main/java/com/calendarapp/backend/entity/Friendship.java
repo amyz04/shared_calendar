@@ -24,8 +24,11 @@ public class Friendship {
     private User sender;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "invitee_id", nullable = false)
+    @JoinColumn(name = "invitee_id", nullable = true)
     private User invitee;
+
+    @Column(name = "invitee_email", nullable = false)
+    private String inviteeEmail;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

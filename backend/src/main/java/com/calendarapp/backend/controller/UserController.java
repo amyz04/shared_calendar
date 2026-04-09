@@ -29,4 +29,10 @@ public class UserController {
         userService.deleteUser(currentUser.getId());
         return ResponseEntity.ok("Account deleted successfully");
     }
+
+    @GetMapping("/by-email")
+        public ResponseEntity<UserResponse> getUserByEmail(
+                @RequestParam String email) {
+            return ResponseEntity.ok(userService.getUserByEmail(email));
+        }
 }
