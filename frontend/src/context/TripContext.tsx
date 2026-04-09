@@ -9,8 +9,11 @@ interface TripContextType {
   loading: boolean;
   error: string | null;
   activeTripId: string | null;
+  showTripModal: boolean;
   setActiveTripId: (id: string | null) => void;
-  createTrip: (data: CreateTripData) => Promise<Trip>;
+  openTripModal: () => void;
+  closeTripModal: () => void;
+  handleCreate: (data: CreateTripData) => Promise<void>;
   deleteTrip: (tripId: string) => Promise<void>;
   refetch: () => Promise<void>;
 }
@@ -34,6 +37,7 @@ export function TripProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTripId, setActiveTripId] = useState<string | null>(null);
+  const [showTripModal, setShowTripModal] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -57,12 +61,12 @@ export function TripProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  async function createTrip(data: CreateTripData): Promise<Trip> {
+  async function handleCreate(data: CreateTripData) {
     const newTrip = await createTripApi(data);
     const normalized = normalizeTrip(newTrip);
     setTrips((prev) => [...prev, normalized]);
     setActiveTripId(normalized.id);
-    return normalized;
+    setShowTripModal(false);
   }
 
   async function deleteTrip(tripId: string) {
@@ -78,8 +82,11 @@ export function TripProvider({ children }: { children: ReactNode }) {
         loading,
         error,
         activeTripId,
+        showTripModal,
         setActiveTripId,
-        createTrip,
+        openTripModal: () => setShowTripModal(true),
+        closeTripModal: () => setShowTripModal(false),
+        handleCreate,
         deleteTrip,
         refetch: fetchTrips,
       }}

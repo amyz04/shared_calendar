@@ -1,23 +1,48 @@
 import { useState } from "react";
-import type { Trip } from "../../types";
+import type { CreateTripData } from "../../types";
 import { MONTHS, EMOJIS } from "../../data";
 import { getUser } from "../../api/auth";
 import { inputCls } from "../ui/inputStyle";
 
 interface NewTripModalProps {
   onClose: () => void;
-  onCreate: (d: Omit<Trip, "id" | "status">) => void;
+  onCreate: (data: CreateTripData) => Promise<void>;
 }
 
 export function NewTripModal({ onClose, onCreate }: NewTripModalProps) {
   const [name, setName] = useState("");
-  const [dest, setDest] = useState("");
+  const [destination, setDestination] = useState("");
   const [cover, setCover] = useState("✈️");
   const [month, setMonth] = useState(4);
   const [year, setYear] = useState(2026);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const user = getUser();
-  const ok = name.trim() !== "" && dest.trim() !== "";
+  const ok = name.trim() !== "" && destination.trim() !== "";
+
+  // first day of selected month as startDate
+  // last day of selected month as endDate
+  function buildDates() {
+    const start = new Date(year, month, 1);
+    const end = new Date(year, month + 1, 0);
+    const fmt = (d: Date) => d.toISOString().split("T")[0];
+    return { startDate: fmt(start), endDate: fmt(end) };
+  }
+
+  async function handleSubmit() {
+    if (!ok) return;
+    try {
+      setLoading(true);
+      setError(null);
+      const { startDate, endDate } = buildDates();
+      await onCreate({ name, destination, cover, startDate, endDate });
+    } catch (err: any) {
+      setError(err.message || "Failed to create trip");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[999]">
@@ -60,7 +85,7 @@ export function NewTripModal({ onClose, onCreate }: NewTripModalProps) {
         {(
           [
             ["Trip name", name, setName, "e.g. Portugal Summer"],
-            ["Destination", dest, setDest, "e.g. Lisbon"],
+            ["Destination", destination, setDestination, "e.g. Lisbon"],
           ] as const
         ).map(([l, v, s, p]) => (
           <div key={l} className="mb-3.5">
@@ -127,19 +152,20 @@ export function NewTripModal({ onClose, onCreate }: NewTripModalProps) {
           </div>
         )}
 
+        {error && (
+          <p className="text-xs text-red-400 mb-3 font-syne">{error}</p>
+        )}
+
         <button
-          onClick={() => {
-            if (!ok) return;
-            onCreate({ name, dest, cover, month, year, memberIds: [1] });
-            onClose();
-          }}
+          onClick={handleSubmit}
+          disabled={!ok || loading}
           className={`w-full py-2.5 rounded-lg text-[13px] font-semibold font-syne border-none transition-all ${
-            ok
+            ok && !loading
               ? "bg-violet-500 hover:bg-violet-600 text-white cursor-pointer"
               : "bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-default"
           }`}
         >
-          Create trip
+          {loading ? "Creating..." : "Create trip"}
         </button>
       </div>
     </div>

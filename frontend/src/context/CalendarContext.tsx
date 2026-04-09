@@ -5,6 +5,9 @@ import type { CalendarSource } from "../types";
 interface CalendarContextType {
   calendars: CalendarSource[];
   calendarsSynced: boolean;
+  showProfile: boolean;
+  openProfile: () => void;
+  closeProfile: () => void;
   addCalendar: (c: CalendarSource) => void;
   removeCalendar: (id: string) => void;
 }
@@ -13,20 +16,19 @@ const CalendarContext = createContext<CalendarContextType | null>(null);
 
 export function CalendarProvider({ children }: { children: ReactNode }) {
   const [calendars, setCalendars] = useState<CalendarSource[]>([]);
-
-  const addCalendar = (c: CalendarSource) =>
-    setCalendars((prev) => [...prev, c]);
-
-  const removeCalendar = (id: string) =>
-    setCalendars((prev) => prev.filter((c) => c.id !== id));
+  const [showProfile, setShowProfile] = useState(false);
 
   return (
     <CalendarContext.Provider
       value={{
         calendars,
         calendarsSynced: calendars.length > 0,
-        addCalendar,
-        removeCalendar,
+        showProfile,
+        openProfile: () => setShowProfile(true),
+        closeProfile: () => setShowProfile(false),
+        addCalendar: (c) => setCalendars((prev) => [...prev, c]),
+        removeCalendar: (id) =>
+          setCalendars((prev) => prev.filter((c) => c.id !== id)),
       }}
     >
       {children}
