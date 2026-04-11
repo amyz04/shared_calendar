@@ -1,0 +1,55 @@
+import { getToken } from "./auth";
+import type { CalendarSource } from "../types";
+
+const BASE_URL = "http://localhost:8080/api";
+
+function authHeaders() {
+  return {
+    Authorization: `Bearer ${getToken()}`,
+  };
+}
+
+export async function getCalendarsApi(): Promise<CalendarSource[]> {
+  const res = await fetch(`${BASE_URL}/calendar`, {
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
+  });
+  if (!res.ok) throw new Error("Failed to fetch calendars");
+  return res.json();
+}
+
+export async function importCalendarApi(
+  file: File,
+  name: string,
+  source: "google" | "apple" | "manual",
+): Promise<CalendarSource> {
+  const form = new FormData();
+  form.append("file", file);
+  form.append("name", name);
+  form.append("source", source);
+  const res = await fetch(`${BASE_URL}/calendar/import`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: form,
+  });
+  if (!res.ok) {
+    // safely handle empty or non-JSON error responses
+    const text = await res.text();
+    let message = "Failed to import calendar";
+    try {
+      const json = JSON.parse(text);
+      message = json.message || message;
+    } catch {
+      message = text || message;
+    }
+    throw new Error(message);
+  }
+  return res.json();
+}
+
+export async function deleteCalendarApi(calendarId: string): Promise<void> {
+  const res = await fetch(`${BASE_URL}/calendar/${calendarId}`, {
+    method: "DELETE",
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
+  });
+  if (!res.ok) throw new Error("Failed to delete calendar");
+}

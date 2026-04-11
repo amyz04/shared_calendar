@@ -6,7 +6,7 @@ import { CalendarGrid } from "./CalendarGrid";
 import { CalendarSyncCard } from "./CalendarSyncCard";
 import { BestWindowsPanel } from "./BestWindowsPanel";
 import { CalendarEmptyState } from "./CalendarEmptyState";
-import { FRIENDS, MONTHS, CURRENT_USER } from "../../data";
+import { MONTHS } from "../../data";
 import {
   daysInMonth,
   firstDow,

@@ -84,9 +84,8 @@ export interface CellData {
 export interface CalendarSource {
   id: string;
   name: string;
-  source: "google" | "apple" | "ics";
-  eventCount: number;
-  color: string;
+  source: "google" | "apple" | "manual";
+  createdAt: string;
 }
 
 export type NavId = "trips" | "calendar" | "friends";
