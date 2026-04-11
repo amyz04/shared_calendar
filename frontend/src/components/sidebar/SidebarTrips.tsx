@@ -4,8 +4,8 @@ import { useNavigate } from "react-router-dom";
 
 interface SidebarTripsProps {
   trips: Trip[];
-  activeTripId: number | null;
-  onSelectTrip: (id: number) => void;
+  activeTripId: string | null;
+  onSelectTrip: (id: string) => void;
   onNewTrip: () => void;
   isGuest: boolean;
 }
@@ -60,15 +60,18 @@ export function SidebarTrips({
                   navigate("/calendar");
                 }}
                 className={`w-full px-2.5 py-2 rounded-lg mb-0.5 cursor-pointer text-left border transition-all
-                  ${on
-                    ? "bg-violet-500/10 border-violet-500/30"
-                    : "bg-transparent border-transparent hover:bg-slate-100 dark:hover:bg-slate-800"
+                  ${
+                    on
+                      ? "bg-violet-500/10 border-violet-500/30"
+                      : "bg-transparent border-transparent hover:bg-slate-100 dark:hover:bg-slate-800"
                   }`}
               >
                 <div className="flex items-center gap-2">
                   <span className="text-[15px]">{t.cover}</span>
                   <div className="flex-1 min-w-0">
-                    <div className={`text-xs font-semibold truncate font-syne ${on ? "text-violet-500" : "text-slate-900 dark:text-slate-100"}`}>
+                    <div
+                      className={`text-xs font-semibold truncate font-syne ${on ? "text-violet-500" : "text-slate-900 dark:text-slate-100"}`}
+                    >
                       {t.name}
                     </div>
                     <div className="text-[10px] text-slate-400 dark:text-slate-600 mt-0.5">

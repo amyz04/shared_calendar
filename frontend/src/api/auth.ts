@@ -1,3 +1,5 @@
+import type { RegisterData } from "../types";
+
 const BASE_URL = "http://localhost:8080";
 
 export async function loginApi(email: string, password: string) {
@@ -10,13 +12,7 @@ export async function loginApi(email: string, password: string) {
   return res.json(); // returns { token, user }
 }
 
-export async function registerApi(data: {
-  firstName: string;
-  lastName: string;
-  email: string;
-  password: string;
-  dateOfBirth?: string;
-}) {
+export async function registerApi(data: RegisterData) {
   const res = await fetch(`${BASE_URL}/api/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

@@ -30,6 +30,7 @@ public class TripService {
     private final TripMemberRepository tripMemberRepository;
 
     public TripResponse createTrip(String userId, CreateTripRequest request) {
+        
         User owner = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 

@@ -7,8 +7,8 @@ import { SidebarFooter } from "./SidebarFooter";
 
 interface SidebarProps {
   trips: Trip[];
-  activeTripId: number | null;
-  onSelectTrip: (id: number) => void;
+  activeTripId: string | null;
+  onSelectTrip: (id: string) => void;
   onNewTrip: () => void;
   onOpenProfile: () => void;
   isDark: boolean;
