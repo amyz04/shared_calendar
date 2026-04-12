@@ -1,6 +1,7 @@
 package com.calendarapp.backend.controller;
 
 import com.calendarapp.backend.dto.request.CreateCalendarRequest;
+import com.calendarapp.backend.dto.response.AvailabilityResponse;
 import com.calendarapp.backend.dto.response.CalendarResponse;
 import com.calendarapp.backend.dto.response.MessageResponse;
 import com.calendarapp.backend.repository.UserRepository;
@@ -64,4 +65,9 @@ public class CalendarController {
         calendarService.deleteCalendar(getUserId(principal), calendarId);
         return ResponseEntity.ok(new MessageResponse("Calendar deleted"));
     }
+
+    @GetMapping("/availability")
+    public ResponseEntity<AvailabilityResponse> getAvailability(Principal principal) {
+        return ResponseEntity.ok(calendarService.getAvailability(getUserId(principal)));
+}
 }
