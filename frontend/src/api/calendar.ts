@@ -20,12 +20,10 @@ export async function getCalendarsApi(): Promise<CalendarSource[]> {
 export async function importCalendarApi(
   file: File,
   name: string,
-  source: "google" | "apple" | "manual",
 ): Promise<CalendarSource> {
   const form = new FormData();
   form.append("file", file);
   form.append("name", name);
-  form.append("source", source);
   const res = await fetch(`${BASE_URL}/calendar/import`, {
     method: "POST",
     headers: authHeaders(),

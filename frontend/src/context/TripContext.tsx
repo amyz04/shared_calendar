@@ -22,7 +22,14 @@ const TripContext = createContext<TripContextType | null>(null);
 
 function normalizeTrip(raw: any): Trip {
   const start = new Date(raw.startDate);
-  console.log("Trip:", raw.name, "| currentUserStatus:", raw.currentUserStatus, "| isOwner:", raw.isOwner);
+  console.log(
+    "Trip:",
+    raw.name,
+    "| currentUserStatus:",
+    raw.currentUserStatus,
+    "| isOwner:",
+    raw.isOwner,
+  );
   return {
     ...raw,
     year: start.getFullYear(),
@@ -100,8 +107,6 @@ export function TripProvider({ children }: { children: ReactNode }) {
     </TripContext.Provider>
   );
 }
-
-
 
 export function useTrips() {
   const ctx = useContext(TripContext);

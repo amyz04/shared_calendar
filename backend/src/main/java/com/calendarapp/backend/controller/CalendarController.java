@@ -39,8 +39,7 @@ public class CalendarController {
             Principal principal) {
         return ResponseEntity.ok(calendarService.createCalendar(
                 getUserId(principal),
-                request.getName(),
-                request.getSource()
+                request.getName()
         ));
     }
 
@@ -48,12 +47,10 @@ public class CalendarController {
     public ResponseEntity<CalendarResponse> importCalendar(
             @RequestParam("file") MultipartFile file,
             @RequestParam("name") String name,
-            @RequestParam("source") String source,
             Principal principal) {
         return ResponseEntity.ok(calendarService.importCalendar(
                 getUserId(principal),
                 name,
-                source,
                 file
         ));
     }

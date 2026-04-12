@@ -88,7 +88,6 @@ export interface CellData {
 export interface CalendarSource {
   id: string;
   name: string;
-  source: "google" | "apple" | "manual";
   createdAt: string;
 }
 

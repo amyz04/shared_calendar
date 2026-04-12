@@ -56,10 +56,6 @@ export function useAvailability(trip: Trip | null, members: Friend[]) {
       .then((data) => {
         if (!cancelled) {
           setAvailability(data);
-          console.log(
-            "Raw availability from API:",
-            JSON.stringify(data, null, 2),
-          );
         }
       })
       .catch((err) => console.error("Failed to fetch availability:", err))

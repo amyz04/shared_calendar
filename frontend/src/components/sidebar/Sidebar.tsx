@@ -36,7 +36,10 @@ export function Sidebar({
   return (
     <aside className="w-60 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 flex flex-col h-screen shrink-0">
       <SidebarBrand isDark={isDark} toggleTheme={toggleTheme} />
-      <SidebarNav activePath={location.pathname} onNav={(path) => navigate(path)} />
+      <SidebarNav
+        activePath={location.pathname}
+        onNav={(path) => navigate(path)}
+      />
       <div className="h-px bg-slate-200 dark:bg-slate-700 mx-2.5 my-1" />
       <SidebarTrips
         trips={trips}

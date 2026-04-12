@@ -43,10 +43,7 @@ export function ProfilePanel({
   const [dob, setDob] = useState(savedUser?.dateOfBirth ?? "");
   const { removeCalendar } = useCalendars();
 
-  async function handleFile(
-    file: File,
-    source: "google" | "apple" | "manual" = "manual",
-  ) {
+  async function handleFile(file: File) {
     if (!file.name.endsWith(".ics")) {
       setImportError("Please upload a .ics file");
       return;
@@ -55,7 +52,7 @@ export function ProfilePanel({
       setImporting(true);
       setImportError(null);
       const name = file.name.replace(".ics", "");
-      const calendar = await importCalendarApi(file, name, source);
+      const calendar = await importCalendarApi(file, name);
       onAddCalendar(calendar);
     } catch (err: any) {
       setImportError(err.message || "Failed to import calendar");
@@ -63,9 +60,6 @@ export function ProfilePanel({
       setImporting(false);
     }
   }
-
-  const sourceColor = (source: string) =>
-    source === "google" ? "#4285f4" : source === "apple" ? "#555" : "#94a3b8";
 
   return (
     <>
@@ -149,18 +143,17 @@ export function ProfilePanel({
             </div>
           )}
 
-          {/* Calendars tab */}
           {tab === "calendars" && (
             <div>
               <div className="text-[11px] font-semibold text-slate-400 dark:text-slate-600 tracking-widest font-syne mb-2.5">
-                IMPORT .ICS FILE
+                IMPORT CALENDAR
               </div>
               <p className="text-[11px] text-slate-400 dark:text-slate-600 mb-3 leading-relaxed">
                 Export your calendar from Google (Settings → Export) or Apple
-                (File → Export) and upload the .ics file below.
+                (File → Export) and drop the .ics file below.
               </p>
 
-              {/* Drag and drop zone */}
+              {/* Drop zone */}
               <div
                 onClick={() => fileRef.current?.click()}
                 onDragOver={(e) => {
@@ -174,7 +167,7 @@ export function ProfilePanel({
                   const f = e.dataTransfer.files[0];
                   if (f) handleFile(f);
                 }}
-                className={`rounded-xl p-5 text-center cursor-pointer border-2 border-dashed transition-all mb-3 ${
+                className={`rounded-xl p-5 text-center cursor-pointer border-2 border-dashed transition-all mb-5 ${
                   dragOver
                     ? "border-violet-500 bg-violet-500/5"
                     : "border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600"
@@ -212,36 +205,6 @@ export function ProfilePanel({
                 )}
               </div>
 
-              {/* Source selector buttons */}
-              <div className="grid grid-cols-2 gap-2 mb-5">
-                {(["google", "apple"] as const).map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => fileRef.current?.click()}
-                    style={{ borderColor: `${sourceColor(p)}40` }}
-                    className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border text-left cursor-pointer hover:border-slate-300 transition-all"
-                  >
-                    <div
-                      style={{
-                        backgroundColor: `${sourceColor(p)}18`,
-                        color: sourceColor(p),
-                      }}
-                      className="w-7 h-7 rounded-lg flex items-center justify-center text-[12px] font-bold font-syne shrink-0"
-                    >
-                      {p === "google" ? "G" : ""}
-                    </div>
-                    <div>
-                      <div className="text-[12px] font-medium text-slate-900 dark:text-slate-100 font-syne">
-                        {p === "google" ? "Google Calendar" : "Apple Calendar"}
-                      </div>
-                      <div className="text-[10px] text-slate-400">
-                        Upload .ics
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-
               {importError && (
                 <p className="text-xs text-red-400 mb-3 font-syne">
                   {importError}
@@ -259,16 +222,10 @@ export function ProfilePanel({
                       key={c.id}
                       className="flex items-center gap-3 px-3.5 py-3 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 mb-2"
                     >
-                      <div
-                        style={{ backgroundColor: sourceColor(c.source) }}
-                        className="w-2.5 h-2.5 rounded-full shrink-0"
-                      />
+                      <div className="w-2.5 h-2.5 rounded-full bg-violet-500 shrink-0" />
                       <div className="flex-1">
                         <div className="text-[13px] font-medium text-slate-900 dark:text-slate-100 font-syne">
                           {c.name}
-                        </div>
-                        <div className="text-[11px] text-slate-400 dark:text-slate-600 capitalize">
-                          {c.source}
                         </div>
                       </div>
                       <button

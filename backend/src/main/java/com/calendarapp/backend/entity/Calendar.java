@@ -4,16 +4,14 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
 @Setter
 @Table(name = "calendar")
 public class Calendar {
-
-    public enum Source {
-        GOOGLE, APPLE, MANUAL
-    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -26,12 +24,11 @@ public class Calendar {
     @Column(name = "calendar_name", nullable = false)
     private String name;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Source source;
-
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    @OneToMany(mappedBy = "calendar", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CalendarEvent> events = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {

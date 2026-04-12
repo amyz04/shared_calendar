@@ -40,18 +40,16 @@ public class CalendarService {
     public CalendarResponse importCalendar(
         String userId,
         String name,
-        String source,
         MultipartFile file
     ){
         
 
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
 
-        // check if calendar with same name and source already exists for this user
+        // check if calendar with same name already exists for this user
         boolean alreadyExists = calendarRepository.findByUser(user)
                 .stream()
-                .anyMatch(c -> c.getName().equals(name) && 
-                            c.getSource().name().equalsIgnoreCase(source));
+                .anyMatch(c -> c.getName().equals(name));
 
         if (alreadyExists) {
             throw new RuntimeException("A calendar with this name already exists");
@@ -61,7 +59,6 @@ public class CalendarService {
         Calendar calendar = new Calendar();
         calendar.setUser(user);
         calendar.setName(name);
-        calendar.setSource(Calendar.Source.valueOf(source.toUpperCase()));
         calendarRepository.save(calendar);
 
         //parse the .ics file
@@ -108,14 +105,13 @@ public class CalendarService {
                 .collect(Collectors.toList());
     }
 
-    public CalendarResponse createCalendar(String userId, String name, String source) {
+    public CalendarResponse createCalendar(String userId, String name) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         Calendar calendar = new Calendar();
         calendar.setUser(user);
         calendar.setName(name);
-        calendar.setSource(Calendar.Source.valueOf(source.toUpperCase()));
 
         calendarRepository.save(calendar);
         return mapToResponse(calendar);
@@ -175,7 +171,6 @@ public class CalendarService {
         return new CalendarResponse(
                 calendar.getId(),
                 calendar.getName(),
-                calendar.getSource().name(),
                 calendar.getCreatedAt()
         );
     }
