@@ -16,7 +16,6 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -30,7 +29,6 @@ public class TripService {
     private final TripMemberRepository tripMemberRepository;
 
     public TripResponse createTrip(String userId, CreateTripRequest request) {
-        
         User owner = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -60,35 +58,34 @@ public class TripService {
         trip.getMembers().add(ownerMember);
 
         tripRepository.save(savedTrip);
-        return mapToResponse(savedTrip);
+        return mapToResponse(savedTrip, userId);
     }
 
+    @Transactional
     public List<TripResponse> getTrips(String userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // get trips owned by user
         List<Trip> ownedTrips = tripRepository.findByOwner(user);
 
-        // get trips where user is a member but not owner
         List<Trip> memberTrips = tripMemberRepository.findByUser(user)
                 .stream()
                 .map(TripMember::getTrip)
                 .filter(t -> !t.getOwner().getId().equals(userId))
                 .collect(Collectors.toList());
 
-        // combine both lists
         ownedTrips.addAll(memberTrips);
 
         return ownedTrips.stream()
-                .map(this::mapToResponse)
+                .map(t -> mapToResponse(t, userId))
                 .collect(Collectors.toList());
     }
 
-    public TripResponse getTrip(String tripId) {
+    @Transactional
+    public TripResponse getTrip(String tripId, String userId) {
         Trip trip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new RuntimeException("Trip not found"));
-        return mapToResponse(trip);
+        return mapToResponse(trip, userId);
     }
 
     @Transactional
@@ -108,7 +105,7 @@ public class TripService {
         if (request.getDetails() != null) trip.setDetails(request.getDetails());
 
         tripRepository.save(trip);
-        return mapToResponse(trip);
+        return mapToResponse(trip, userId);
     }
 
     @Transactional
@@ -145,8 +142,13 @@ public class TripService {
         member.setStatus(TripMember.Status.PENDING);
         tripMemberRepository.save(member);
 
-        return mapToResponse(trip);
+        // reload trip to get updated members list
+        Trip reloadedTrip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new RuntimeException("Trip not found"));
+
+        return mapToResponse(reloadedTrip, userId);
     }
+
     @Transactional
     public TripResponse joinTrip(String userId, String inviteToken) {
         Trip trip = tripRepository.findByInviteToken(inviteToken)
@@ -165,7 +167,7 @@ public class TripService {
         member.setStatus(TripMember.Status.CONFIRMED);
         tripMemberRepository.save(member);
 
-        return mapToResponse(trip);
+        return mapToResponse(trip, userId);
     }
 
     @Transactional
@@ -186,11 +188,45 @@ public class TripService {
         tripMemberRepository.delete(member);
     }
 
+    @Transactional
+public TripResponse respondToTrip(String userId, String tripId, String status) {
+    Trip trip = tripRepository.findById(tripId)
+            .orElseThrow(() -> new RuntimeException("Trip not found"));
+
+    User user = userRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+
+    TripMember member = tripMemberRepository.findByTripAndUser(trip, user)
+            .orElseThrow(() -> new RuntimeException("Not a member of this trip"));
+
+    member.setStatus(TripMember.Status.valueOf(status.toUpperCase()));
+    tripMemberRepository.save(member);
+
+    // check if all non-owner members have responded
+    List<TripMember> nonOwnerMembers = trip.getMembers().stream()
+            .filter(m -> !m.getUser().getId().equals(trip.getOwner().getId()))
+            .toList();
+
+    boolean allResponded = nonOwnerMembers.stream()
+            .allMatch(m -> m.getStatus() == TripMember.Status.CONFIRMED
+                    || m.getStatus() == TripMember.Status.REJECTED);
+
+    if (allResponded && !nonOwnerMembers.isEmpty()) {
+        trip.setStatus(Trip.Status.CONFIRMED);
+        tripRepository.save(trip);
+    }
+
+    Trip reloadedTrip = tripRepository.findById(tripId)
+            .orElseThrow(() -> new RuntimeException("Trip not found"));
+
+    return mapToResponse(reloadedTrip, userId);
+}
+
     private String generateInviteToken() {
         return UUID.randomUUID().toString().replace("-", "").substring(0, 12);
     }
 
-    private TripResponse mapToResponse(Trip trip) {
+    private TripResponse mapToResponse(Trip trip, String currentUserId) {
     UserResponse owner = new UserResponse(
             trip.getOwner().getId(),
             trip.getOwner().getFirstName(),
@@ -202,31 +238,55 @@ public class TripService {
     );
 
     List<TripMemberResponse> members = trip.getMembers().stream()
-        .filter(m -> m != null && m.getUser() != null)
-        .map(m -> new TripMemberResponse(
-                m.getId(),
-                m.getUser().getId(),
-                m.getUser().getFirstName(),
-                m.getUser().getLastName(),
-                m.getUser().getEmail(),
-                m.getUser().getAvatarColor(),
-                m.getStatus().name(),
-                m.getJoinedAt()
-        ))
-        .collect(Collectors.toList());
+            .filter(m -> m != null && m.getUser() != null)
+            .map(m -> new TripMemberResponse(
+                    m.getId(),
+                    m.getUser().getId(),
+                    m.getUser().getFirstName(),
+                    m.getUser().getLastName(),
+                    m.getUser().getEmail(),
+                    m.getUser().getAvatarColor(),
+                    m.getStatus().name(),
+                    m.getJoinedAt()
+            ))
+            .collect(Collectors.toList());
+
+    boolean isOwner = trip.getOwner().getId().equals(currentUserId);
+
+    long acceptedCount = trip.getMembers().stream()
+            .filter(m -> m != null && m.getUser() != null
+                    && m.getStatus() == TripMember.Status.CONFIRMED
+                    && !m.getUser().getId().equals(trip.getOwner().getId()))
+            .count();
+
+    long declinedCount = trip.getMembers().stream()
+            .filter(m -> m != null && m.getUser() != null
+                    && m.getStatus() == TripMember.Status.REJECTED)
+            .count();
+
+    String currentUserStatus = trip.getMembers().stream()
+            .filter(m -> m != null && m.getUser() != null
+                    && m.getUser().getId().equals(currentUserId))
+            .map(m -> m.getStatus().name())
+            .findFirst()
+            .orElse("PENDING");
 
     return new TripResponse(
-        trip.getId(),
-        trip.getName(),
-        trip.getDestination(),
-        trip.getCover(),
-        trip.getInviteToken(),
-        owner,
-        members,
-        trip.getStartDate(),
-        trip.getEndDate(),
-        trip.getStatus().name(),
-        trip.getCreatedAt()
-    );
-}
+            trip.getId(),
+            trip.getName(),
+            trip.getDestination(),
+            trip.getCover(),
+            trip.getInviteToken(),
+            owner,
+            members,
+            trip.getStartDate(),
+            trip.getEndDate(),
+            trip.getStatus().name(),
+            trip.getCreatedAt(),
+            isOwner,
+            acceptedCount,
+            declinedCount,
+            currentUserStatus
+        );
+        }
 }

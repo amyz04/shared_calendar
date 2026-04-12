@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import type { Trip } from "../../types";
-import { LockedButton, Pill } from "../ui";
+import { LockedButton } from "../ui";
 import { InviteModal } from "./InviteModal";
 import { getUser } from "../../api/auth";
 import { getFriendships, updateFriendship, inviteByEmail, getSentInvites } from "../../api/friends";
@@ -67,7 +67,6 @@ export function FriendsPage({ trips, isGuest }: FriendsPageProps) {
         const isSender = f.sender.email === user?.email;
         const other = isSender ? f.invitee : f.sender;
 
-        // skip if other is null (no account yet — handled by sentInvites)
         if (!other) return;
 
         if (f.status === "ACCEPTED") {
@@ -96,8 +95,6 @@ export function FriendsPage({ trips, isGuest }: FriendsPageProps) {
 
   async function loadSentInvites() {
     try {
-      // getSentInvites returns friendships where invitee is null (no account)
-      // getFriendships returns all — we need sent with accounts too
       const [sentNoAccount, allFriendships] = await Promise.all([
         getSentInvites(),
         getFriendships(),
@@ -212,7 +209,7 @@ export function FriendsPage({ trips, isGuest }: FriendsPageProps) {
           </div>
         </div>
       ) : (
-        <div className="max-w-lg">
+        <div className="max-w-2xl">
           {/* Tabs */}
           <div className="flex gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl mb-5 w-fit">
             {TABS.map(tab => (
@@ -266,22 +263,30 @@ export function FriendsPage({ trips, isGuest }: FriendsPageProps) {
                       </button>
                     </div>
                   ) : (
-                    <div className="flex flex-col gap-2">
+                    <div className="grid grid-cols-3 gap-3">
                       {friends.map(f => (
-                        <div key={f.friendshipId} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 flex items-center gap-3.5">
-                          <AvatarInitials name={f.name} color={f.avatarColor} />
-                          <div className="flex-1 min-w-0">
-                            <div className="text-[13px] font-semibold text-slate-900 dark:text-slate-100 font-syne">{f.name}</div>
-                            <div className="text-xs text-slate-400 dark:text-slate-600 mt-0.5">{f.email}</div>
+                        <div key={f.friendshipId} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 flex flex-col items-center gap-3 text-center">
+                          <div
+                            style={{ background: `${f.avatarColor}22`, border: `2px solid ${f.avatarColor}55`, color: f.avatarColor }}
+                            className="w-14 h-14 rounded-full flex items-center justify-center text-lg font-bold font-syne"
+                          >
+                            {f.name.split(" ").map(n => n[0]).join("")}
                           </div>
-                          <Pill color="#4ade80" dot>friends</Pill>
+                          <div className="min-w-0 w-full">
+                            <div className="text-[13px] font-semibold text-slate-900 dark:text-slate-100 font-syne truncate">{f.name}</div>
+                            <div className="text-[11px] text-slate-400 dark:text-slate-600 mt-0.5 truncate">{f.email}</div>
+                          </div>
+                          <span className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 font-syne font-semibold">
+                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                            friends
+                          </span>
                         </div>
                       ))}
                     </div>
                   )}
                 </div>
               )}
-
+              
               {/* Pending tab */}
               {activeTab === "pending" && (
                 <div className="flex flex-col gap-5">
@@ -294,24 +299,29 @@ export function FriendsPage({ trips, isGuest }: FriendsPageProps) {
                         <p className="text-xs text-slate-500 dark:text-slate-400">Friend requests will appear here when someone invites you.</p>
                       </div>
                     ) : (
-                      <div className="flex flex-col gap-2">
+                      <div className="grid grid-cols-3 gap-3">
                         {pending.map(req => (
-                          <div key={req.friendshipId} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 flex items-center gap-3.5">
-                            <AvatarInitials name={req.fromName} color={req.avatarColor} />
-                            <div className="flex-1 min-w-0">
-                              <div className="text-[13px] font-semibold text-slate-900 dark:text-slate-100 font-syne">{req.fromName}</div>
-                              <div className="text-xs text-slate-400 dark:text-slate-600 mt-0.5">{req.fromEmail}</div>
+                          <div key={req.friendshipId} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 flex flex-col items-center gap-3 text-center">
+                            <div
+                              style={{ background: `${req.avatarColor}22`, border: `2px solid ${req.avatarColor}55`, color: req.avatarColor }}
+                              className="w-14 h-14 rounded-full flex items-center justify-center text-lg font-bold font-syne"
+                            >
+                              {req.fromName.split(" ").map(n => n[0]).join("")}
                             </div>
-                            <div className="flex gap-2 shrink-0">
+                            <div className="min-w-0 w-full">
+                              <div className="text-[13px] font-semibold text-slate-900 dark:text-slate-100 font-syne truncate">{req.fromName}</div>
+                              <div className="text-[11px] text-slate-400 dark:text-slate-600 mt-0.5 truncate">{req.fromEmail}</div>
+                            </div>
+                            <div className="flex gap-2 w-full">
                               <button
                                 onClick={() => handleDecline(req.friendshipId)}
-                                className="px-3 py-1.5 rounded-lg text-xs font-semibold font-syne border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 bg-transparent hover:border-red-400 hover:text-red-400 cursor-pointer transition-all"
+                                className="flex-1 py-1.5 rounded-lg text-xs font-semibold font-syne border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 bg-transparent hover:border-red-400 hover:text-red-400 cursor-pointer transition-all"
                               >
                                 Decline
                               </button>
                               <button
                                 onClick={() => handleAccept(req.friendshipId)}
-                                className="px-3 py-1.5 rounded-lg text-xs font-semibold font-syne bg-violet-500 hover:bg-violet-400 text-white border-none cursor-pointer transition-all"
+                                className="flex-1 py-1.5 rounded-lg text-xs font-semibold font-syne bg-violet-500 hover:bg-violet-400 text-white border-none cursor-pointer transition-all"
                               >
                                 Accept
                               </button>
@@ -331,28 +341,33 @@ export function FriendsPage({ trips, isGuest }: FriendsPageProps) {
                         <p className="text-xs text-slate-500 dark:text-slate-400">Invites you send will appear here until accepted.</p>
                       </div>
                     ) : (
-                      <div className="flex flex-col gap-2">
+                      <div className="grid grid-cols-3 gap-3">
                         {sentInvites.map(inv => (
-                          <div key={inv.id} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 flex items-center gap-3.5">
+                          <div key={inv.id} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 flex flex-col items-center gap-3 text-center">
                             {inv.hasAccount && inv.name ? (
-                              <AvatarInitials name={inv.name} color={inv.avatarColor ?? "#8b5cf6"} />
+                              <div
+                                style={{ background: `${inv.avatarColor ?? "#8b5cf6"}22`, border: `2px solid ${inv.avatarColor ?? "#8b5cf6"}55`, color: inv.avatarColor ?? "#8b5cf6" }}
+                                className="w-14 h-14 rounded-full flex items-center justify-center text-lg font-bold font-syne"
+                              >
+                                {inv.name.split(" ").map(n => n[0]).join("")}
+                              </div>
                             ) : (
                               <div
-                                style={{ background: "#8b5cf622", border: "1.5px solid #8b5cf655", color: "#8b5cf6" }}
-                                className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold font-syne shrink-0"
+                                style={{ background: "#8b5cf622", border: "2px solid #8b5cf655", color: "#8b5cf6" }}
+                                className="w-14 h-14 rounded-full flex items-center justify-center text-lg font-bold font-syne"
                               >
                                 ?
                               </div>
                             )}
-                            <div className="flex-1 min-w-0">
-                              <div className="text-[13px] font-semibold text-slate-900 dark:text-slate-100 font-syne">
+                            <div className="min-w-0 w-full">
+                              <div className="text-[13px] font-semibold text-slate-900 dark:text-slate-100 font-syne truncate">
                                 {inv.hasAccount && inv.name ? inv.name : inv.inviteeEmail}
                               </div>
-                              <div className="text-xs text-slate-400 dark:text-slate-600 mt-0.5">
+                              <div className="text-[11px] text-slate-400 dark:text-slate-600 mt-0.5 truncate">
                                 {inv.hasAccount ? inv.inviteeEmail : "No account yet"}
                               </div>
                             </div>
-                            <span className={`text-[11px] px-2.5 py-1 rounded-full font-syne font-semibold shrink-0 border ${
+                            <span className={`text-[10px] px-2 py-1 rounded-full font-syne font-semibold border ${
                               inv.hasAccount
                                 ? "bg-amber-400/10 text-amber-400 border-amber-400/30"
                                 : "bg-violet-500/10 text-violet-400 border-violet-500/30"

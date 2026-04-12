@@ -34,8 +34,9 @@ public class TripController {
 
     @GetMapping("/{tripId}")
     public ResponseEntity<TripResponse> getTrip(
+            @AuthenticationPrincipal User currentUser,
             @PathVariable String tripId) {
-        return ResponseEntity.ok(tripService.getTrip(tripId));
+        return ResponseEntity.ok(tripService.getTrip(tripId, currentUser.getId()));
     }
 
     @PutMapping("/{tripId}")
@@ -52,5 +53,36 @@ public class TripController {
             @PathVariable String tripId) {
         tripService.deleteTrip(currentUser.getId(), tripId);
         return ResponseEntity.ok("Trip deleted successfully");
+    }
+
+    @PostMapping("/{tripId}/invite")
+    public ResponseEntity<TripResponse> inviteMember(
+            @AuthenticationPrincipal User currentUser,
+            @PathVariable String tripId,
+            @RequestParam String friendId) {
+        return ResponseEntity.ok(tripService.inviteMember(currentUser.getId(), tripId, friendId));
+    }
+
+    @PostMapping("/join")
+    public ResponseEntity<TripResponse> joinTrip(
+            @AuthenticationPrincipal User currentUser,
+            @RequestParam String inviteToken) {
+        return ResponseEntity.ok(tripService.joinTrip(currentUser.getId(), inviteToken));
+    }
+
+    @DeleteMapping("/{tripId}/leave")
+    public ResponseEntity<String> leaveTrip(
+            @AuthenticationPrincipal User currentUser,
+            @PathVariable String tripId) {
+        tripService.leaveTrip(currentUser.getId(), tripId);
+        return ResponseEntity.ok("Left trip successfully");
+    }
+
+    @PutMapping("/{tripId}/respond")
+    public ResponseEntity<TripResponse> respondToTrip(
+            @AuthenticationPrincipal User currentUser,
+            @PathVariable String tripId,
+            @RequestParam String status) {
+        return ResponseEntity.ok(tripService.respondToTrip(currentUser.getId(), tripId, status));
     }
 }
