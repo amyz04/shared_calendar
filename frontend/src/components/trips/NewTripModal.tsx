@@ -3,6 +3,8 @@ import type { CreateTripData } from "../../types";
 import { MONTHS, EMOJIS } from "../../data";
 import { getUser } from "../../api/auth";
 import { getFriendships } from "../../api/friends";
+import { createTripApi, inviteMemberApi } from "../../api/trip";
+import { useTrips } from "../../context/TripContext";
 import { inputCls } from "../ui/inputStyle";
 
 interface FriendOption {
@@ -30,6 +32,7 @@ export function NewTripModal({ onClose, onCreate }: NewTripModalProps) {
   const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
 
   const user = getUser();
+  const { refetch } = useTrips();
   const ok = name.trim() !== "" && destination.trim() !== "";
 
   useEffect(() => {
@@ -76,7 +79,22 @@ export function NewTripModal({ onClose, onCreate }: NewTripModalProps) {
       setLoading(true);
       setError(null);
       const { startDate, endDate } = buildDates();
-      await onCreate({ name, destination, cover, startDate, endDate, details });
+
+      // 1. Create the trip
+      const newTrip = await createTripApi({ name, destination, cover, startDate, endDate, details });
+
+      // 2. Invite selected friends
+      for (const friendId of selectedFriends) {
+        try {
+          await inviteMemberApi(newTrip.id, friendId);
+        } catch {
+          // ignore individual invite failures
+        }
+      }
+
+      // 3. Refetch trips so context is up to date
+      await refetch();
+
       onClose();
     } catch (err: any) {
       setError(err.message || "Failed to create trip");

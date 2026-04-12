@@ -20,14 +20,19 @@ interface TripContextType {
 
 const TripContext = createContext<TripContextType | null>(null);
 
-function normalizeTrip(trip: Trip): Trip {
-  const start = new Date(trip.startDate);
+function normalizeTrip(raw: any): Trip {
+  const start = new Date(raw.startDate);
+  console.log("Trip:", raw.name, "| currentUserStatus:", raw.currentUserStatus, "| isOwner:", raw.isOwner);
   return {
-    ...trip,
+    ...raw,
     year: start.getFullYear(),
     month: start.getMonth(),
-    dest: trip.destination,
-    memberIds: trip.members.map((_, i) => i + 1),
+    dest: raw.destination,
+    memberIds: (raw.members ?? []).map((_: any, i: number) => i + 1),
+    isOwner: raw.isOwner === true,
+    acceptedCount: raw.acceptedCount ?? 0,
+    declinedCount: raw.declinedCount ?? 0,
+    currentUserStatus: raw.currentUserStatus ?? "PENDING",
   };
 }
 
@@ -95,6 +100,8 @@ export function TripProvider({ children }: { children: ReactNode }) {
     </TripContext.Provider>
   );
 }
+
+
 
 export function useTrips() {
   const ctx = useContext(TripContext);
