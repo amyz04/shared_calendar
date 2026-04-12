@@ -10,7 +10,7 @@ function authHeaders() {
   };
 }
 
-export async function getTripsApi(): Promise<Trip[]> {
+export async function getTripsApi(): Promise<any[]> {
   const res = await fetch(`${BASE_URL}/trip`, {
     headers: authHeaders(),
   });
@@ -18,7 +18,7 @@ export async function getTripsApi(): Promise<Trip[]> {
   return res.json();
 }
 
-export async function getTripApi(tripId: string): Promise<Trip> {
+export async function getTripApi(tripId: string): Promise<any> {
   const res = await fetch(`${BASE_URL}/trip/${tripId}`, {
     headers: authHeaders(),
   });
@@ -26,7 +26,7 @@ export async function getTripApi(tripId: string): Promise<Trip> {
   return res.json();
 }
 
-export async function createTripApi(data: CreateTripData): Promise<Trip> {
+export async function createTripApi(data: CreateTripData): Promise<any> {
   const res = await fetch(`${BASE_URL}/trip`, {
     method: "POST",
     headers: authHeaders(),
@@ -47,25 +47,30 @@ export async function deleteTripApi(tripId: string): Promise<void> {
   if (!res.ok) throw new Error("Failed to delete trip");
 }
 
+// friendId as query param to match @RequestParam in controller
 export async function inviteMemberApi(
   tripId: string,
   friendId: string,
-): Promise<Trip> {
-  const res = await fetch(`${BASE_URL}/trip/${tripId}/invite`, {
-    method: "POST",
-    headers: authHeaders(),
-    body: JSON.stringify({ friendId }),
-  });
+): Promise<any> {
+  const res = await fetch(
+    `${BASE_URL}/trip/${tripId}/invite?friendId=${encodeURIComponent(friendId)}`,
+    {
+      method: "POST",
+      headers: authHeaders(),
+    }
+  );
   if (!res.ok) throw new Error("Failed to invite member");
   return res.json();
 }
 
-export async function joinTripApi(inviteToken: string): Promise<Trip> {
-  const res = await fetch(`${BASE_URL}/trip/join`, {
-    method: "POST",
-    headers: authHeaders(),
-    body: JSON.stringify({ inviteToken }),
-  });
+export async function joinTripApi(inviteToken: string): Promise<any> {
+  const res = await fetch(
+    `${BASE_URL}/trip/join?inviteToken=${encodeURIComponent(inviteToken)}`,
+    {
+      method: "POST",
+      headers: authHeaders(),
+    }
+  );
   if (!res.ok) throw new Error("Failed to join trip");
   return res.json();
 }
@@ -76,4 +81,16 @@ export async function leaveTripApi(tripId: string): Promise<void> {
     headers: authHeaders(),
   });
   if (!res.ok) throw new Error("Failed to leave trip");
+}
+
+export async function respondToTripApi(tripId: string, status: "CONFIRMED" | "REJECTED"): Promise<any> {
+  const res = await fetch(
+    `${BASE_URL}/trip/${tripId}/respond?status=${status}`,
+    {
+      method: "PUT",
+      headers: authHeaders(),
+    }
+  );
+  if (!res.ok) throw new Error("Failed to respond to trip");
+  return res.json();
 }

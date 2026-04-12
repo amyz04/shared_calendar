@@ -55,6 +55,10 @@ export interface Trip {
   endDate: string;
   status: "PROPOSED" | "CONFIRMED" | "CANCELLED";
   createdAt: string;
+  isOwner: boolean;
+  acceptedCount: number;
+  declinedCount: number;
+  currentUserStatus: string;
   // frontend-only fields for calendar display
   year: number;
   month: number;

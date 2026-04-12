@@ -1,5 +1,6 @@
 package com.calendarapp.backend.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import java.time.LocalDate;
@@ -20,4 +21,11 @@ public class TripResponse {
     private LocalDate endDate;
     private String status;
     private LocalDateTime createdAt;
+
+    @JsonProperty("isOwner")
+    private boolean isOwner;
+
+    private long acceptedCount;
+    private long declinedCount;
+    private String currentUserStatus;
 }
