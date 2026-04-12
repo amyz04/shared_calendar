@@ -8,6 +8,8 @@ import com.calendarapp.backend.entity.User;
 import com.calendarapp.backend.repository.EventRepository;
 import com.calendarapp.backend.repository.ItineraryRepository;
 import com.calendarapp.backend.repository.UserRepository;
+
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -22,20 +24,18 @@ public class EventService {
     private final ItineraryRepository itineraryRepository;
     private final UserRepository userRepository;
 
-
+        @Transactional
     public EventResponse createEvent(String itineraryId, String userId, CreateEventRequest request) {
-        // Trip trip = tripRepository.findById(itineraryId)
-        //         .orElseThrow(() -> new RuntimeException("Trip not found"));
 
         Itinerary itinerary = itineraryRepository.findById(itineraryId)
                 .orElseThrow(() -> new RuntimeException("Itinerary not found"));
 
-        User createdBy = userRepository.findById(userId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         Event event = new Event();
         event.setItinerary(itinerary);
-        event.setCreatedBy(createdBy);
+        event.setCreatedBy(user);
         event.setName(request.getName());
         event.setDescription(request.getDescription());
         event.setLocation(request.getLocation());
@@ -49,9 +49,7 @@ public class EventService {
     }
 
     public List<EventResponse> getEvents(String itineraryId) {
-        // Trip trip = tripRepository.findById(itineraryId)
-        //         .orElseThrow(() -> new RuntimeException("Trip not found"));
-
+ 
         Itinerary itinerary = itineraryRepository.findById(itineraryId)
                 .orElseThrow(() -> new RuntimeException("Itinerary not found"));
 
@@ -60,10 +58,13 @@ public class EventService {
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
-
-    public EventResponse updateEvent(String eventId, CreateEventRequest request) {
+        @Transactional
+    public EventResponse updateEvent(String userId, String eventId, CreateEventRequest request) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new RuntimeException("Event not found"));
+        if (!event.getCreatedBy().getId().equals(userId)) {
+            throw new RuntimeException("Only the event creator can update this event");
+        }
 
         if (request.getName() != null) event.setName(request.getName());
         if (request.getDescription() != null) event.setDescription(request.getDescription());
@@ -75,10 +76,13 @@ public class EventService {
         eventRepository.save(event);
         return mapToResponse(event);
     }
-
-    public void deleteEvent(String eventId) {
+    @Transactional
+    public void deleteEvent(String userId, String eventId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new RuntimeException("Event not found"));
+        if (!event.getCreatedBy().getId().equals(userId)) {
+            throw new RuntimeException("Only the event creator can delete this event");
+        }
         eventRepository.delete(event);
     }
 
