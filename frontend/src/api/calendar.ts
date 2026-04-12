@@ -53,3 +53,21 @@ export async function deleteCalendarApi(calendarId: string): Promise<void> {
   });
   if (!res.ok) throw new Error("Failed to delete calendar");
 }
+
+export interface EventBlock {
+  title: string;
+  start: string;
+  end: string;
+}
+
+export interface AvailabilityData {
+  events: Record<string, EventBlock[]>;
+}
+
+export async function getAvailabilityApi(): Promise<AvailabilityData> {
+  const res = await fetch(`${BASE_URL}/calendar/availability`, {
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
+  });
+  if (!res.ok) throw new Error("Failed to fetch availability");
+  return res.json();
+}

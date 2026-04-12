@@ -8,6 +8,7 @@ import { getUser } from "../../api/auth";
 import { importCalendarApi, deleteCalendarApi } from "../../api/calendar";
 import { useTrips } from "../../context/TripContext";
 import { MONTHS } from "../../data";
+import { useCalendars } from "../../context/CalendarContext";
 
 interface ProfilePanelProps {
   onClose: () => void;
@@ -40,6 +41,7 @@ export function ProfilePanel({
     savedUser?.avatarColor ?? "#8b5cf6",
   );
   const [dob, setDob] = useState(savedUser?.dateOfBirth ?? "");
+  const { removeCalendar } = useCalendars();
 
   async function handleFile(
     file: File,
@@ -59,15 +61,6 @@ export function ProfilePanel({
       setImportError(err.message || "Failed to import calendar");
     } finally {
       setImporting(false);
-    }
-  }
-
-  async function handleRemove(id: string) {
-    try {
-      await deleteCalendarApi(id);
-      onRemoveCalendar(id);
-    } catch (err: any) {
-      console.error("Failed to delete calendar:", err.message);
     }
   }
 
@@ -279,7 +272,7 @@ export function ProfilePanel({
                         </div>
                       </div>
                       <button
-                        onClick={() => handleRemove(c.id)}
+                        onClick={() => removeCalendar(c.id)}
                         className="bg-transparent border-none text-slate-400 cursor-pointer text-base transition-colors hover:text-red-400"
                       >
                         ×
