@@ -37,6 +37,7 @@ export function TripDetailPage({
   const [activeTab, setActiveTab] = useState<"availability" | "itinerary">("availability");
   const [confirmedRange, setConfirmedRange] = useState<ConfirmedRange | null>(null);
   const [selDay, setSelDay] = useState<number | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const { deleteTrip } = useTrips();
   const currentUser = getUser();
@@ -48,13 +49,14 @@ export function TripDetailPage({
 
   const isOwner = currentUser?.id === trip?.owner?.id;
 
-  async function handleDeleteTrip() {
-    if (!confirm("Are you sure you want to delete this trip? This cannot be undone.")) return;
+  async function confirmDeleteTrip() {
     try {
       await deleteTrip(trip!.id);
       navigate("/trips");
     } catch {
       // ignore
+    } finally {
+      setShowDeleteConfirm(false);
     }
   }
 
@@ -90,7 +92,7 @@ export function TripDetailPage({
         </div>
         {isOwner && (
           <button
-            onClick={handleDeleteTrip}
+            onClick={() => setShowDeleteConfirm(true)}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-400/10 border border-red-400/30 text-red-400 text-xs font-semibold font-syne hover:bg-red-400/20 cursor-pointer transition-all"
           >
             <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
@@ -106,6 +108,37 @@ export function TripDetailPage({
   if (!calendarsSynced) {
     return (
       <div>
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[999]">
+            <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-7 w-[360px] flex flex-col items-center gap-4 text-center">
+              <div className="w-12 h-12 rounded-full bg-red-400/10 flex items-center justify-center">
+                <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth={2} strokeLinecap="round">
+                  <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" />
+                </svg>
+              </div>
+              <div>
+                <div className="text-[15px] font-bold text-slate-900 dark:text-slate-100 font-syne mb-1">Delete trip</div>
+                <p className="text-[13px] text-slate-500 dark:text-slate-400">
+                  Are you sure you want to delete <span className="font-semibold text-slate-900 dark:text-slate-100">{trip.name}</span>? This cannot be undone.
+                </p>
+              </div>
+              <div className="flex gap-2 w-full">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="flex-1 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 text-[13px] font-semibold font-syne bg-transparent hover:border-slate-300 cursor-pointer transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDeleteTrip}
+                  className="flex-1 py-2.5 rounded-lg bg-red-400 hover:bg-red-500 text-white text-[13px] font-semibold font-syne border-none cursor-pointer transition-all"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         <TripHeader />
         <CalendarEmptyState onOpenProfile={onOpenProfile} isGuest={isGuest} />
       </div>
@@ -137,6 +170,41 @@ export function TripDetailPage({
 
   return (
     <div>
+      {/* Delete Confirm Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[999]">
+          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-7 w-[360px] flex flex-col items-center gap-4 text-center">
+            <div className="w-12 h-12 rounded-full bg-red-400/10 flex items-center justify-center">
+              <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth={2} strokeLinecap="round">
+                <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" />
+              </svg>
+            </div>
+            <div>
+              <div className="text-[15px] font-bold text-slate-900 dark:text-slate-100 font-syne mb-1">Delete trip</div>
+              <p className="text-[13px] text-slate-500 dark:text-slate-400">
+                Are you sure you want to delete{" "}
+                <span className="font-semibold text-slate-900 dark:text-slate-100">{trip.name}</span>?
+                This cannot be undone and will remove the trip for all members.
+              </p>
+            </div>
+            <div className="flex gap-2 w-full">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="flex-1 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 text-[13px] font-semibold font-syne bg-transparent hover:border-slate-300 cursor-pointer transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeleteTrip}
+                className="flex-1 py-2.5 rounded-lg bg-red-400 hover:bg-red-500 text-white text-[13px] font-semibold font-syne border-none cursor-pointer transition-all"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <TripHeader />
 
       <div className="flex gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl mb-6 w-fit">
