@@ -57,7 +57,7 @@ export async function inviteMemberApi(
     {
       method: "POST",
       headers: authHeaders(),
-    }
+    },
   );
   if (!res.ok) throw new Error("Failed to invite member");
   return res.json();
@@ -69,7 +69,7 @@ export async function joinTripApi(inviteToken: string): Promise<any> {
     {
       method: "POST",
       headers: authHeaders(),
-    }
+    },
   );
   if (!res.ok) throw new Error("Failed to join trip");
   return res.json();
@@ -83,13 +83,16 @@ export async function leaveTripApi(tripId: string): Promise<void> {
   if (!res.ok) throw new Error("Failed to leave trip");
 }
 
-export async function respondToTripApi(tripId: string, status: "CONFIRMED" | "REJECTED"): Promise<any> {
+export async function respondToTripApi(
+  tripId: string,
+  status: "CONFIRMED" | "REJECTED",
+): Promise<any> {
   const res = await fetch(
     `${BASE_URL}/trip/${tripId}/respond?status=${status}`,
     {
       method: "PUT",
       headers: authHeaders(),
-    }
+    },
   );
   if (!res.ok) throw new Error("Failed to respond to trip");
   return res.json();

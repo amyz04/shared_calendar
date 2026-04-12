@@ -6,7 +6,4 @@ import lombok.Getter;
 public class CreateCalendarRequest {
     @NotBlank
     private String name;
-
-    @NotBlank
-    private String source;
 }

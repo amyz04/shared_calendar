@@ -10,6 +10,5 @@ import java.time.LocalDateTime;
 public class CalendarResponse {
     private String id;
     private String name;
-    private String source;
     private LocalDateTime createdAt;
 }

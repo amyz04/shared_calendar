@@ -61,8 +61,8 @@ export function NewTripModal({ onClose, onCreate }: NewTripModalProps) {
   }
 
   function toggleFriend(id: string) {
-    setSelectedFriends(prev =>
-      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    setSelectedFriends((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
   }
 
@@ -81,7 +81,14 @@ export function NewTripModal({ onClose, onCreate }: NewTripModalProps) {
       const { startDate, endDate } = buildDates();
 
       // 1. Create the trip
-      const newTrip = await createTripApi({ name, destination, cover, startDate, endDate, details });
+      const newTrip = await createTripApi({
+        name,
+        destination,
+        cover,
+        startDate,
+        endDate,
+        details,
+      });
 
       // 2. Invite selected friends
       for (const friendId of selectedFriends) {
@@ -110,12 +117,19 @@ export function NewTripModal({ onClose, onCreate }: NewTripModalProps) {
           <h2 className="text-[18px] font-bold text-slate-900 dark:text-slate-100 font-syne m-0">
             Plan a new trip
           </h2>
-          <button onClick={onClose} className="bg-transparent border-none text-slate-500 text-xl cursor-pointer">×</button>
+          <button
+            onClick={onClose}
+            className="bg-transparent border-none text-slate-500 text-xl cursor-pointer"
+          >
+            ×
+          </button>
         </div>
 
         {/* Icon picker */}
         <div className="mb-4">
-          <div className="text-[11px] text-slate-500 dark:text-slate-400 font-syne mb-2 font-medium">Trip icon</div>
+          <div className="text-[11px] text-slate-500 dark:text-slate-400 font-syne mb-2 font-medium">
+            Trip icon
+          </div>
           <div className="flex gap-1.5 flex-wrap">
             {EMOJIS.map((e) => (
               <button
@@ -134,13 +148,17 @@ export function NewTripModal({ onClose, onCreate }: NewTripModalProps) {
         </div>
 
         {/* Name + destination + details */}
-        {([
-          ["Trip name", name, setName, "e.g. Portugal Summer"],
-          ["Destination", destination, setDestination, "e.g. Lisbon"],
-          ["Details", details, setDetails, "e.g. Escape room!"],
-        ] as const).map(([l, v, s, p]) => (
+        {(
+          [
+            ["Trip name", name, setName, "e.g. Portugal Summer"],
+            ["Destination", destination, setDestination, "e.g. Lisbon"],
+            ["Details", details, setDetails, "e.g. Escape room!"],
+          ] as const
+        ).map(([l, v, s, p]) => (
           <div key={l} className="mb-3.5">
-            <div className="text-[11px] text-slate-500 dark:text-slate-400 mb-1.5 font-medium font-syne">{l}</div>
+            <div className="text-[11px] text-slate-500 dark:text-slate-400 mb-1.5 font-medium font-syne">
+              {l}
+            </div>
             <input
               value={v as string}
               onChange={(e) => (s as (v: string) => void)(e.target.value)}
@@ -153,15 +171,35 @@ export function NewTripModal({ onClose, onCreate }: NewTripModalProps) {
         {/* Month + year */}
         <div className="grid grid-cols-2 gap-3 mb-5">
           <div>
-            <div className="text-[11px] text-slate-500 dark:text-slate-400 mb-1.5 font-medium font-syne">Month</div>
-            <select value={month} onChange={(e) => setMonth(+e.target.value)} className={inputCls}>
-              {MONTHS.map((m, i) => <option key={i} value={i}>{m}</option>)}
+            <div className="text-[11px] text-slate-500 dark:text-slate-400 mb-1.5 font-medium font-syne">
+              Month
+            </div>
+            <select
+              value={month}
+              onChange={(e) => setMonth(+e.target.value)}
+              className={inputCls}
+            >
+              {MONTHS.map((m, i) => (
+                <option key={i} value={i}>
+                  {m}
+                </option>
+              ))}
             </select>
           </div>
           <div>
-            <div className="text-[11px] text-slate-500 dark:text-slate-400 mb-1.5 font-medium font-syne">Year</div>
-            <select value={year} onChange={(e) => setYear(+e.target.value)} className={inputCls}>
-              {[2025, 2026, 2027].map((y) => <option key={y} value={y}>{y}</option>)}
+            <div className="text-[11px] text-slate-500 dark:text-slate-400 mb-1.5 font-medium font-syne">
+              Year
+            </div>
+            <select
+              value={year}
+              onChange={(e) => setYear(+e.target.value)}
+              className={inputCls}
+            >
+              {[2025, 2026, 2027].map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))}
             </select>
           </div>
         </div>
@@ -177,16 +215,20 @@ export function NewTripModal({ onClose, onCreate }: NewTripModalProps) {
             </div>
           ) : (
             <div className="flex flex-col gap-1.5 max-h-[160px] overflow-y-auto">
-              {friends.map(f => {
+              {friends.map((f) => {
                 const selected = selectedFriends.includes(f.id);
                 return (
                   <button
                     key={f.id}
                     onClick={() => toggleFriend(f.id)}
-                    style={selected ? {
-                      backgroundColor: `${f.avatarColor}10`,
-                      borderColor: `${f.avatarColor}40`,
-                    } : undefined}
+                    style={
+                      selected
+                        ? {
+                            backgroundColor: `${f.avatarColor}10`,
+                            borderColor: `${f.avatarColor}40`,
+                          }
+                        : undefined
+                    }
                     className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-left border transition-all ${
                       !selected
                         ? "bg-slate-100 dark:bg-slate-700 border-slate-200 dark:border-slate-600 hover:border-slate-300"
@@ -201,7 +243,10 @@ export function NewTripModal({ onClose, onCreate }: NewTripModalProps) {
                       }}
                       className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold font-syne shrink-0"
                     >
-                      {f.name.split(" ").map(n => n[0]).join("")}
+                      {f.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div
@@ -210,14 +255,23 @@ export function NewTripModal({ onClose, onCreate }: NewTripModalProps) {
                       >
                         {f.name}
                       </div>
-                      <div className="text-[10px] text-slate-400 dark:text-slate-600">{f.email}</div>
+                      <div className="text-[10px] text-slate-400 dark:text-slate-600">
+                        {f.email}
+                      </div>
                     </div>
                     {selected && (
                       <div
                         style={{ backgroundColor: f.avatarColor }}
                         className="w-4 h-4 rounded-full flex items-center justify-center shrink-0"
                       >
-                        <svg width={8} height={8} viewBox="0 0 10 10" fill="none" stroke="#fff" strokeWidth={2}>
+                        <svg
+                          width={8}
+                          height={8}
+                          viewBox="0 0 10 10"
+                          fill="none"
+                          stroke="#fff"
+                          strokeWidth={2}
+                        >
                           <path d="M2 5l2 2 4-4" />
                         </svg>
                       </div>
@@ -232,15 +286,21 @@ export function NewTripModal({ onClose, onCreate }: NewTripModalProps) {
         {/* Creator info */}
         {user && (
           <div className="mb-5 px-3.5 py-3 rounded-xl bg-slate-100 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-700">
-            <div className="text-[11px] text-slate-500 dark:text-slate-400 font-syne mb-1">Created by</div>
+            <div className="text-[11px] text-slate-500 dark:text-slate-400 font-syne mb-1">
+              Created by
+            </div>
             <div className="text-[13px] font-semibold text-slate-900 dark:text-slate-100 font-syne">
               {user.firstName} {user.lastName}
-              <span className="text-[11px] text-slate-400 font-normal ml-1.5">(you)</span>
+              <span className="text-[11px] text-slate-400 font-normal ml-1.5">
+                (you)
+              </span>
             </div>
           </div>
         )}
 
-        {error && <p className="text-xs text-red-400 mb-3 font-syne">{error}</p>}
+        {error && (
+          <p className="text-xs text-red-400 mb-3 font-syne">{error}</p>
+        )}
 
         <button
           onClick={handleSubmit}
@@ -251,7 +311,9 @@ export function NewTripModal({ onClose, onCreate }: NewTripModalProps) {
               : "bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-default"
           }`}
         >
-          {loading ? "Creating..." : `Create trip${selectedFriends.length > 0 ? ` & invite ${selectedFriends.length}` : ""}`}
+          {loading
+            ? "Creating..."
+            : `Create trip${selectedFriends.length > 0 ? ` & invite ${selectedFriends.length}` : ""}`}
         </button>
       </div>
     </div>

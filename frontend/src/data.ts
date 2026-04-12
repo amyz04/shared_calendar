@@ -17,7 +17,7 @@ export const MONTHS = [
   "December",
 ];
 
-export const DAYS_SHORT = ["S", "M", "T", "W", "T", "F", "S"];
+export const DAYS_SHORT = ["Sun", "Mon", "Tues", "Wed", "Thurs", "Fri", "Sat"];
 
 export const EMOJIS = [
   "✈️",

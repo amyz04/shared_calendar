@@ -1,13 +1,17 @@
 package com.calendarapp.backend.controller;
 
+import com.calendarapp.backend.dto.request.CreateCalendarRequest;
+import com.calendarapp.backend.dto.response.AvailabilityResponse;
 import com.calendarapp.backend.dto.response.CalendarResponse;
-import com.calendarapp.backend.entity.User;
+import com.calendarapp.backend.dto.response.MessageResponse;
+import com.calendarapp.backend.repository.UserRepository;
 import com.calendarapp.backend.service.CalendarService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -16,26 +20,51 @@ import java.util.List;
 public class CalendarController {
 
     private final CalendarService calendarService;
+    private final UserRepository userRepository;
 
-    @GetMapping
-    public ResponseEntity<List<CalendarResponse>> getCalendars(
-            @AuthenticationPrincipal User currentUser) {
-        return ResponseEntity.ok(calendarService.getCalendars(currentUser.getId()));
+    private String getUserId(Principal principal) {
+        return userRepository.findByEmail(principal.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"))
+                .getId();
     }
 
-    @PostMapping("/connect/{provider}")
-    public ResponseEntity<CalendarResponse> connectCalendar(
-            @AuthenticationPrincipal User currentUser,
-            @PathVariable String provider,
-            @RequestParam String name) {
-        return ResponseEntity.ok(calendarService.createCalendar(currentUser.getId(), name, provider));
+    @GetMapping
+    public ResponseEntity<List<CalendarResponse>> getCalendars(Principal principal) {
+        return ResponseEntity.ok(calendarService.getCalendars(getUserId(principal)));
+    }
+
+    @PostMapping
+    public ResponseEntity<CalendarResponse> createCalendar(
+            @RequestBody CreateCalendarRequest request,
+            Principal principal) {
+        return ResponseEntity.ok(calendarService.createCalendar(
+                getUserId(principal),
+                request.getName()
+        ));
+    }
+
+    @PostMapping("/import")
+    public ResponseEntity<CalendarResponse> importCalendar(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("name") String name,
+            Principal principal) {
+        return ResponseEntity.ok(calendarService.importCalendar(
+                getUserId(principal),
+                name,
+                file
+        ));
     }
 
     @DeleteMapping("/{calendarId}")
-    public ResponseEntity<String> deleteCalendar(
-            @AuthenticationPrincipal User currentUser,
-            @PathVariable String calendarId) {
-        calendarService.deleteCalendar(currentUser.getId(), calendarId);
-        return ResponseEntity.ok("Calendar deleted successfully");
+    public ResponseEntity<MessageResponse> deleteCalendar(
+            @PathVariable String calendarId,
+            Principal principal) {
+        calendarService.deleteCalendar(getUserId(principal), calendarId);
+        return ResponseEntity.ok(new MessageResponse("Calendar deleted"));
     }
+
+    @GetMapping("/availability")
+    public ResponseEntity<AvailabilityResponse> getAvailability(Principal principal) {
+        return ResponseEntity.ok(calendarService.getAvailability(getUserId(principal)));
+}
 }

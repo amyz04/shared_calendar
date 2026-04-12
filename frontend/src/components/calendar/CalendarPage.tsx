@@ -1,25 +1,20 @@
-import { useState, useMemo } from "react";
-import type { Trip, Friend, BusyMap, CellData } from "../../types";
+import { useState } from "react";
+import type { Trip } from "../../types";
+import { CalendarEmptyState } from "./CalendarEmptyState";
+import { useAvailability } from "../../hooks/useAvailability";
+import { useTripMembers } from "../../hooks/useTripMembers";
 import { Avatar, Pill } from "../ui";
 import { CalendarHeader } from "./CalendarHeader";
 import { CalendarGrid } from "./CalendarGrid";
 import { CalendarSyncCard } from "./CalendarSyncCard";
 import { BestWindowsPanel } from "./BestWindowsPanel";
-import { CalendarEmptyState } from "./CalendarEmptyState";
-import { FRIENDS, MONTHS, CURRENT_USER } from "../../data";
-import {
-  daysInMonth,
-  firstDow,
-  fmtH,
-  genBusy,
-  getFreeSlots,
-  computeWindows,
-} from "../../utils";
+import { MONTHS } from "../../data";
+import { firstDow, fmtH } from "../../utils";
 
 interface CalendarPageProps {
   trips: Trip[];
-  activeTripId: number;
-  onSelectTrip: (id: number) => void;
+  activeTripId: string | null;
+  onSelectTrip: (id: string) => void;
   onOpenProfile: () => void;
   calendarsSynced: boolean;
   isGuest: boolean;
@@ -28,68 +23,50 @@ interface CalendarPageProps {
 export function CalendarPage({
   trips,
   activeTripId,
-  onSelectTrip,
   onOpenProfile,
   calendarsSynced,
   isGuest,
 }: CalendarPageProps) {
-  if (!calendarsSynced)
+  const [selDay, setSelDay] = useState<number | null>(null);
+
+  const trip = trips.find((t) => t.id === activeTripId) ?? trips[0] ?? null;
+  const members = useTripMembers(trip);
+  const { cells, windows, busyEventCounts, days, loading } = useAvailability(
+    trip,
+    members,
+  );
+
+  if (!calendarsSynced) {
     return (
       <CalendarEmptyState onOpenProfile={onOpenProfile} isGuest={isGuest} />
     );
+  }
 
-  const [selDay, setSelDay] = useState<number | null>(null);
-  const trip = trips.find((t) => t.id === activeTripId) || trips[0];
-  const members = trip.memberIds
-    .map((id) => FRIENDS.find((f) => f.id === id))
-    .filter(Boolean) as Friend[];
+  if (!trip) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <div className="text-[15px] font-bold text-slate-900 dark:text-slate-100 font-syne mb-2">
+          No trip selected
+        </div>
+        <p className="text-[13px] text-slate-500 dark:text-slate-400">
+          Create a trip first then come back here.
+        </p>
+      </div>
+    );
+  }
+
   const { year, month } = trip;
-  const days = daysInMonth(year, month);
   const fd = firstDow(year, month);
-
-  const allBusy = useMemo<BusyMap>(() => {
-    const out: BusyMap = {};
-    members.forEach((f) => {
-      out[f.id] = genBusy(f.id * 31 + trip.id * 7, year, month);
-    });
-    return out;
-  }, [trip.id]);
-
-  const cells = useMemo(() => {
-    const out: { [d: number]: CellData } = {};
-    for (let d = 1; d <= days; d++) {
-      const mb = members.map((f) => ({ f, blocks: allBusy[f.id]?.[d] || [] }));
-      const ab = mb.flatMap((x) => x.blocks);
-      out[d] = {
-        memberBusy: mb,
-        freeSlots: getFreeSlots(ab),
-        fullyFree: members.filter(
-          (f) => (allBusy[f.id]?.[d] || []).length === 0,
-        ),
-      };
-    }
-    return out;
-  }, [trip.id]);
-
-  const windows = useMemo(
-    () => computeWindows(members, allBusy, year, month),
-    [trip.id],
-  );
 
   const dayStatus = (d: number) => {
     const r = cells[d].fullyFree.length / members.length;
     return r === 1 ? "free" : r >= 0.5 ? "partial" : "busy";
   };
+
   const statusColor = (s: string) =>
     s === "free" ? "#8b5cf6" : s === "partial" ? "#2dd4bf" : "#f87171";
 
   const sel = selDay !== null ? cells[selDay] : null;
-  const busyEventCounts = Object.fromEntries(
-    members.map((f) => [
-      f.id,
-      Object.values(allBusy[f.id] || {}).reduce((s, b) => s + b.length, 0),
-    ]),
-  );
 
   return (
     <div>
@@ -102,6 +79,13 @@ export function CalendarPage({
         </p>
       </div>
 
+      {loading && (
+        <div className="flex items-center gap-2 text-[12px] text-slate-400 font-syne mb-4">
+          <div className="w-3 h-3 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
+          Loading your calendar events...
+        </div>
+      )}
+
       <div className="flex gap-2 mb-5">
         <div
           style={{ backgroundColor: "#8b5cf620", borderColor: "#8b5cf650" }}
@@ -113,7 +97,7 @@ export function CalendarPage({
             style={{ backgroundColor: "#8b5cf620" }}
             className="text-[11px] px-1.5 py-0.5 rounded-full"
           >
-            {trip.memberIds.length}
+            {members.length}
           </span>
         </div>
       </div>
@@ -123,7 +107,7 @@ export function CalendarPage({
           <CalendarHeader
             month={month}
             year={year}
-            subtitle={`${members.length} members · click a day to inspect`}
+            subtitle={`${members.length} member${members.length !== 1 ? "s" : ""} · click a day to inspect`}
           />
           <CalendarGrid
             days={days}
