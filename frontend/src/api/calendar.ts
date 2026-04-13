@@ -69,3 +69,11 @@ export async function getAvailabilityApi(): Promise<AvailabilityData> {
   if (!res.ok) throw new Error("Failed to fetch availability");
   return res.json();
 }
+
+export async function getTripAvailabilityApi(tripId: string): Promise<Record<string, AvailabilityData>> {
+  const res = await fetch(`${BASE_URL}/calendar/availability/trip/${tripId}`, {
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
+  });
+  if (!res.ok) throw new Error("Failed to fetch trip availability");
+  return res.json();
+}

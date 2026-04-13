@@ -16,6 +16,7 @@ export function useTripMembers(trip: Trip): Friend[] {
         initials: `${m.firstName?.[0] ?? ""}${m.lastName?.[0] ?? ""}`,
         color: m.avatarColor ?? "#8b5cf6",
         email: m.email,
+        hasSynced: m.hasSynced,
       }));
   }
 

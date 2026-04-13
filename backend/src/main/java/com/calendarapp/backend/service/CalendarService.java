@@ -3,9 +3,12 @@ package com.calendarapp.backend.service;
 import com.calendarapp.backend.dto.response.CalendarResponse;
 import com.calendarapp.backend.entity.Calendar;
 import com.calendarapp.backend.entity.CalendarEvent;
+import com.calendarapp.backend.entity.Trip;
+import com.calendarapp.backend.entity.TripMember;
 import com.calendarapp.backend.entity.User;
 import com.calendarapp.backend.repository.CalendarEventRepository;
 import com.calendarapp.backend.repository.CalendarRepository;
+import com.calendarapp.backend.repository.TripRepository;
 import com.calendarapp.backend.repository.UserRepository;
 
 import jakarta.transaction.Transactional;
@@ -35,18 +38,13 @@ public class CalendarService {
     private final CalendarRepository calendarRepository;
     private final UserRepository userRepository;
     private final CalendarEventRepository calendarEventRepository;
+    private final TripRepository tripRepository;
 
     @Transactional
-    public CalendarResponse importCalendar(
-        String userId,
-        String name,
-        MultipartFile file
-    ){
-        
+    public CalendarResponse importCalendar(String userId, String name, MultipartFile file) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
-
-        // check if calendar with same name already exists for this user
         boolean alreadyExists = calendarRepository.findByUser(user)
                 .stream()
                 .anyMatch(c -> c.getName().equals(name));
@@ -55,44 +53,39 @@ public class CalendarService {
             throw new RuntimeException("A calendar with this name already exists");
         }
 
-        //create calendar record
         Calendar calendar = new Calendar();
         calendar.setUser(user);
         calendar.setName(name);
         calendarRepository.save(calendar);
 
-        //parse the .ics file
-        try(InputStream is = file.getInputStream()){
+        try (InputStream is = file.getInputStream()) {
             CalendarBuilder builder = new CalendarBuilder();
             net.fortuna.ical4j.model.Calendar ical = builder.build(is);
 
-            for(Component component : ical.getComponents(Component.VEVENT)) {
+            for (Component component : ical.getComponents(Component.VEVENT)) {
                 VEvent vevent = (VEvent) component;
                 CalendarEvent event = new CalendarEvent();
                 event.setCalendar(calendar);
 
-                // get event title
                 Summary summary = vevent.getSummary();
                 event.setName(summary != null ? summary.getValue() : "Untitled");
 
-                //get start time
                 DtStart dtStart = vevent.getStartDate();
-                if(dtStart != null){
+                if (dtStart != null) {
                     event.setStartTime(dtStart.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
                 }
 
                 DtEnd dtEnd = vevent.getEndDate();
-                if(dtEnd != null){
+                if (dtEnd != null) {
                     event.setEndTime(dtEnd.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
                 }
                 calendarEventRepository.save(event);
             }
-        }
-        catch (Exception e){
+        } catch (Exception e) {
             throw new RuntimeException("Failed to parse calendar file: " + e.getMessage());
         }
-        return mapToResponse(calendar);
 
+        return mapToResponse(calendar);
     }
 
     public List<CalendarResponse> getCalendars(String userId) {
@@ -128,45 +121,63 @@ public class CalendarService {
         calendarRepository.delete(calendar);
     }
 
-    public AvailabilityResponse getAvailability(String userId) {
-        System.out.println("Getting availability for userId: " + userId);
-        User user = userRepository.findById(userId)
-            .orElseThrow(() -> new RuntimeException("User not found"));
+    public Map<String, AvailabilityResponse> getTripAvailability(String tripId) {
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new RuntimeException("Trip not found"));
 
-    List<Calendar> calendars = calendarRepository.findByUser(user);
-        System.out.println("Found " + calendars.size() + " calendars for user");
-    Map<String, List<AvailabilityResponse.EventBlock>> byDate = new HashMap<>();
+        Map<String, AvailabilityResponse> result = new HashMap<>();
 
-    for (Calendar calendar : calendars) {
-        List<CalendarEvent> events = calendarEventRepository.findByCalendar(calendar);
-        System.out.println("Calendar " + calendar.getName() + " has " + events.size() + " events");
+        trip.getMembers().stream()
+                .filter(m -> m != null && m.getUser() != null
+                        && m.getStatus() == TripMember.Status.CONFIRMED)
+                .forEach(m -> {
+                    User user = m.getUser();
+                    // only include if user has at least one calendar
+                    if (calendarRepository.existsByUser(user)) {
+                        AvailabilityResponse avail = getAvailabilityForUser(user);
+                        result.put(user.getEmail(), avail);
+                    }
+                });
 
-        for (CalendarEvent event : events) {
-            if (event.getStartTime() == null) continue;
-
-            // skip all-day events that have no time component
-            LocalDateTime start = event.getStartTime();
-            LocalDateTime end = event.getEndTime() != null
-                    ? event.getEndTime()
-                    : start.plusHours(1);
-
-            // use just the date as the key e.g. "2026-04-15"
-            String dateKey = start.toLocalDate().toString();
-
-            AvailabilityResponse.EventBlock block = new AvailabilityResponse.EventBlock(
-                    event.getName(),
-                    start.toString(),
-                    end.toString()
-            );
-
-            byDate.computeIfAbsent(dateKey, k -> new ArrayList<>()).add(block);
-        }
+        return result;
     }
 
-    return new AvailabilityResponse(byDate);
-}
+    public AvailabilityResponse getAvailabilityForUser(User user) {
+        List<Calendar> calendars = calendarRepository.findByUser(user);
+        Map<String, List<AvailabilityResponse.EventBlock>> byDate = new HashMap<>();
 
-    
+        for (Calendar calendar : calendars) {
+            List<CalendarEvent> events = calendarEventRepository.findByCalendar(calendar);
+
+            for (CalendarEvent event : events) {
+                if (event.getStartTime() == null) continue;
+
+                LocalDateTime start = event.getStartTime();
+                LocalDateTime end = event.getEndTime() != null
+                        ? event.getEndTime()
+                        : start.plusHours(1);
+
+                String dateKey = start.toLocalDate().toString();
+
+                AvailabilityResponse.EventBlock block = new AvailabilityResponse.EventBlock(
+                        event.getName(),
+                        start.toString(),
+                        end.toString()
+                );
+
+                byDate.computeIfAbsent(dateKey, k -> new ArrayList<>()).add(block);
+            }
+        }
+
+        return new AvailabilityResponse(byDate);
+    }
+
+    public AvailabilityResponse getAvailability(String userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return getAvailabilityForUser(user);
+    }
+
     private CalendarResponse mapToResponse(Calendar calendar) {
         return new CalendarResponse(
                 calendar.getId(),

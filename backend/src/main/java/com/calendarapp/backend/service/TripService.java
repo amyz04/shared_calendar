@@ -9,6 +9,7 @@ import com.calendarapp.backend.entity.Trip;
 import com.calendarapp.backend.entity.TripMember;
 import com.calendarapp.backend.entity.User;
 import com.calendarapp.backend.repository.TripRepository;
+import com.calendarapp.backend.repository.CalendarRepository;
 import com.calendarapp.backend.repository.TripMemberRepository;
 import com.calendarapp.backend.repository.UserRepository;
 
@@ -27,6 +28,7 @@ public class TripService {
     private final TripRepository tripRepository;
     private final UserRepository userRepository;
     private final TripMemberRepository tripMemberRepository;
+    private final CalendarRepository calendarRepository;
 
     public TripResponse createTrip(String userId, CreateTripRequest request) {
         User owner = userRepository.findById(userId)
@@ -240,18 +242,19 @@ public TripResponse respondToTrip(String userId, String tripId, String status) {
     );
 
     List<TripMemberResponse> members = trip.getMembers().stream()
-            .filter(m -> m != null && m.getUser() != null)
-            .map(m -> new TripMemberResponse(
-                    m.getId(),
-                    m.getUser().getId(),
-                    m.getUser().getFirstName(),
-                    m.getUser().getLastName(),
-                    m.getUser().getEmail(),
-                    m.getUser().getAvatarColor(),
-                    m.getStatus().name(),
-                    m.getJoinedAt()
-            ))
-            .collect(Collectors.toList());
+        .filter(m -> m != null && m.getUser() != null)
+        .map(m -> new TripMemberResponse(
+                m.getId(),
+                m.getUser().getId(),
+                m.getUser().getFirstName(),
+                m.getUser().getLastName(),
+                m.getUser().getEmail(),
+                m.getUser().getAvatarColor(),
+                m.getStatus().name(),
+                m.getJoinedAt(),
+                calendarRepository.existsByUser(m.getUser())
+        ))
+        .collect(Collectors.toList());
 
     boolean isOwner = trip.getOwner().getId().equals(currentUserId);
 

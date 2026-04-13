@@ -25,8 +25,9 @@ export interface TripMember {
   lastName: string;
   email: string;
   avatarColor: string;
-  status: "PENDING" | "CONFIRMED" | "REJECTED";
+  status: string;
   joinedAt: string;
+  hasSynced: boolean;
 }
 
 export interface Friend {
@@ -35,6 +36,7 @@ export interface Friend {
   initials: string;
   color: string;
   email: string;
+  hasSynced?: boolean;
 }
 
 export interface TimeBlock {
