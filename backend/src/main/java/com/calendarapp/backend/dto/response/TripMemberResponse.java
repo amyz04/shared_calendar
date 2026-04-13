@@ -15,4 +15,5 @@ public class TripMemberResponse {
     private String avatarColor;
     private String status;
     private LocalDateTime joinedAt;
+    private boolean hasSynced;
 }

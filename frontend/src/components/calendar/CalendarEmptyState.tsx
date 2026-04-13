@@ -3,15 +3,20 @@ import { CalendarGrid } from "./CalendarGrid";
 import { CalendarSyncCard } from "./CalendarSyncCard";
 import { BestWindowsPanel } from "./BestWindowsPanel";
 import { daysInMonth, firstDow } from "../../utils";
+import type { Friend } from "../../types";
 
 interface CalendarEmptyStateProps {
   onOpenProfile: () => void;
   isGuest: boolean;
+  members?: Friend[];
+  busyEventCounts?: Record<number, number>;
 }
 
 export function CalendarEmptyState({
   onOpenProfile,
   isGuest,
+  members = [],
+  busyEventCounts,
 }: CalendarEmptyStateProps) {
   const year = new Date().getFullYear();
   const month = new Date().getMonth();
@@ -84,7 +89,11 @@ export function CalendarEmptyState({
             </button>
           </div>
 
-          <CalendarSyncCard members={[]} isGuest={isGuest} />
+          <CalendarSyncCard
+            members={members}
+            busyEventCounts={busyEventCounts}
+            isGuest={isGuest}
+          />
         </div>
       </div>
 

@@ -63,6 +63,8 @@ export function computeWindows(
   year: number,
   month: number,
 ) {
+  if (members.length === 0) return []; 
+  
   const days = daysInMonth(year, month);
   const results: any[] = [];
   for (let start = 1; start <= days - 1; start++) {
