@@ -41,16 +41,14 @@ public class TripService {
         trip.setDetails(request.getDetails());
         trip.setOwner(owner);
         trip.setInviteToken(generateInviteToken());
-        trip.setStatus(Trip.Status.PROPOSED);
-
+        trip.setStatus(Trip.Status.CONFIRMED); // auto-confirm since owner is only member
+        
         Trip savedTrip = tripRepository.save(trip);
 
-        // auto create itinerary and attach to trip
         Itinerary itinerary = new Itinerary();
         itinerary.setTrip(savedTrip);
         trip.setItinerary(itinerary);
 
-        // add owner as a confirmed member automatically
         TripMember ownerMember = new TripMember();
         ownerMember.setTrip(savedTrip);
         ownerMember.setUser(owner);
@@ -59,7 +57,7 @@ public class TripService {
 
         tripRepository.save(savedTrip);
         return mapToResponse(savedTrip, userId);
-    }
+        }
 
     @Transactional
     public List<TripResponse> getTrips(String userId) {
@@ -141,6 +139,10 @@ public class TripService {
         member.setUser(friend);
         member.setStatus(TripMember.Status.PENDING);
         tripMemberRepository.save(member);
+
+        // set back to PROPOSED since now waiting for responses
+        trip.setStatus(Trip.Status.PROPOSED);
+        tripRepository.save(trip);
 
         // reload trip to get updated members list
         Trip reloadedTrip = tripRepository.findById(tripId)

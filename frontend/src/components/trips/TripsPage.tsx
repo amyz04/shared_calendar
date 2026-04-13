@@ -37,7 +37,7 @@ export function TripsPage({
   const sentTrips = trips.filter((t) => {
     if (!t.isOwner || t.status !== "PROPOSED") return false;
     const invitedCount = t.members.length - 1;
-    if (invitedCount === 0) return true;
+    if (invitedCount === 0) return false;
     const respondedCount = (t.acceptedCount ?? 0) + (t.declinedCount ?? 0);
     return respondedCount < invitedCount;
   });
@@ -46,7 +46,7 @@ export function TripsPage({
     (t) =>
       !t.isOwner &&
       t.status === "PROPOSED" &&
-      t.currentUserStatus !== "REJECTED",
+      t.currentUserStatus === "PENDING"
   );
 
   const TABS = [
@@ -221,7 +221,7 @@ export function TripsPage({
       </div>
 
       {isGuest ? (
-        <div className="max-w-sm">
+        <div className="max-w-3x1">
           <div className="bg-white dark:bg-slate-800 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl px-7 py-12 text-center flex flex-col items-center gap-2.5">
             <div className="w-13 h-13 rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 flex items-center justify-center">
               <svg
@@ -249,7 +249,7 @@ export function TripsPage({
           </div>
         </div>
       ) : (
-        <div className="max-w-sm">
+        <div className="max-w-3x1">
           {/* Tabs */}
           <div className="flex gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl mb-5 w-fit">
             {TABS.map((tab) => (
@@ -311,7 +311,7 @@ export function TripsPage({
                   </button>
                 </div>
               ) : (
-                <div className="flex flex-col gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                   {confirmedTrips.map((t) => (
                     <TripCard
                       key={t.id}
@@ -362,7 +362,7 @@ export function TripsPage({
                     </p>
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                     {sentTrips.map((t) => (
                       <TripCard
                         key={t.id}
@@ -393,7 +393,7 @@ export function TripsPage({
                     </p>
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                     {receivedTrips.map((t) => (
                       <ReceivedTripCard key={t.id} t={t} />
                     ))}

@@ -17,21 +17,20 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (request.getEmail() != null) {
-            user.setEmail(request.getEmail());
-        }
-        if (request.getAvatarColor() != null) {
-            user.setAvatarColor(request.getAvatarColor());
-        }
+        if (request.getFirstName() != null) user.setFirstName(request.getFirstName());
+        if (request.getLastName() != null) user.setLastName(request.getLastName());
+        if (request.getEmail() != null) user.setEmail(request.getEmail());
+        if (request.getAvatarColor() != null) user.setAvatarColor(request.getAvatarColor());
+        if (request.getDateOfBirth() != null) user.setDateOfBirth(request.getDateOfBirth());
 
         userRepository.save(user);
         return mapToUserResponse(user);
     }
 
     public UserResponse getUserByEmail(String email) {
-    User user = userRepository.findByEmail(email)
-            .orElseThrow(() -> new RuntimeException("User not found"));
-    return mapToUserResponse(user);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return mapToUserResponse(user);
     }
 
     public void deleteUser(String userId) {
