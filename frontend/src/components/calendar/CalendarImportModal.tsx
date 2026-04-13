@@ -39,7 +39,7 @@ export function CalendarImportModal({
     try {
       setLoading(true);
       setError(null);
-      const calendar = await importCalendarApi(file!, name, source);
+      const calendar = await importCalendarApi(file!, name);
       onImport(calendar);
       onClose();
     } catch (err: any) {

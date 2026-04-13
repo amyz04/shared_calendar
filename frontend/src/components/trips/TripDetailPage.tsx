@@ -5,7 +5,6 @@ import { CalendarHeader } from "../calendar/CalendarHeader";
 import { CalendarGrid } from "../calendar/CalendarGrid";
 import { CalendarSyncCard } from "../calendar/CalendarSyncCard";
 import { BestWindowsPanel } from "../calendar/BestWindowsPanel";
-import { CalendarEmptyState } from "../calendar/CalendarEmptyState";
 import { DateProposalSection } from "./DateProposalSection";
 import { ItineraryTab } from "./ItineraryTab";
 import { MONTHS } from "../../data";
@@ -45,7 +44,7 @@ export function TripDetailPage({
 
   const trip = trips.find((t) => t.id === activeTripId) ?? trips[0] ?? null;
   const members = useTripMembers(trip!);
-  const { cells, windows, busyEventCounts, days } = useAvailability(trip!, members);
+  const { cells, windows, busyEventCounts, days, syncedMemberIds } = useAvailability(trip!, members);
 
   const isOwner = currentUser?.id === trip?.owner?.id;
 
@@ -79,74 +78,10 @@ export function TripDetailPage({
   const { year, month } = trip;
   const fd = firstDow(year, month);
 
-  const TripHeader = () => (
-    <div className="mb-5">
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-[22px] font-bold text-slate-900 dark:text-slate-100 font-syne tracking-tight m-0">
-            {trip.name}
-          </h1>
-          <p className="text-[13px] text-slate-500 dark:text-slate-400 mt-1">
-            {trip.dest} · {MONTHS[month]} {year} · {members.length} member{members.length !== 1 ? "s" : ""}
-          </p>
-        </div>
-        {isOwner && (
-          <button
-            onClick={() => setShowDeleteConfirm(true)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-400/10 border border-red-400/30 text-red-400 text-xs font-semibold font-syne hover:bg-red-400/20 cursor-pointer transition-all"
-          >
-            <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
-              <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" />
-            </svg>
-            Delete trip
-          </button>
-        )}
-      </div>
-    </div>
-  );
-
-  if (!calendarsSynced) {
-    return (
-      <div>
-        {showDeleteConfirm && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[999]">
-            <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-7 w-[360px] flex flex-col items-center gap-4 text-center">
-              <div className="w-12 h-12 rounded-full bg-red-400/10 flex items-center justify-center">
-                <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth={2} strokeLinecap="round">
-                  <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" />
-                </svg>
-              </div>
-              <div>
-                <div className="text-[15px] font-bold text-slate-900 dark:text-slate-100 font-syne mb-1">Delete trip</div>
-                <p className="text-[13px] text-slate-500 dark:text-slate-400">
-                  Are you sure you want to delete <span className="font-semibold text-slate-900 dark:text-slate-100">{trip.name}</span>? This cannot be undone.
-                </p>
-              </div>
-              <div className="flex gap-2 w-full">
-                <button
-                  onClick={() => setShowDeleteConfirm(false)}
-                  className="flex-1 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 text-[13px] font-semibold font-syne bg-transparent hover:border-slate-300 cursor-pointer transition-all"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={confirmDeleteTrip}
-                  className="flex-1 py-2.5 rounded-lg bg-red-400 hover:bg-red-500 text-white text-[13px] font-semibold font-syne border-none cursor-pointer transition-all"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-        <TripHeader />
-        <CalendarEmptyState onOpenProfile={onOpenProfile} isGuest={isGuest} />
-      </div>
-    );
-  }
-
   const dayStatus = (d: number) => {
-    const r = cells[d].fullyFree.length / members.length;
+    const syncedCount = syncedMemberIds.size;
+    if (syncedCount === 0) return "busy";
+    const r = cells[d].fullyFree.length / syncedCount;
     return r === 1 ? "free" : r >= 0.5 ? "partial" : "busy";
   };
 
@@ -205,7 +140,30 @@ export function TripDetailPage({
         </div>
       )}
 
-      <TripHeader />
+      {/* Trip Header */}
+      <div className="mb-5">
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-[22px] font-bold text-slate-900 dark:text-slate-100 font-syne tracking-tight m-0">
+              {trip.name}
+            </h1>
+            <p className="text-[13px] text-slate-500 dark:text-slate-400 mt-1">
+              {trip.dest} · {MONTHS[month]} {year} · {members.length} member{members.length !== 1 ? "s" : ""}
+            </p>
+          </div>
+          {isOwner && (
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-400/10 border border-red-400/30 text-red-400 text-xs font-semibold font-syne hover:bg-red-400/20 cursor-pointer transition-all"
+            >
+              <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
+                <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" />
+              </svg>
+              Delete trip
+            </button>
+          )}
+        </div>
+      </div>
 
       <div className="flex gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl mb-6 w-fit">
         {TABS.map((tab) => (
@@ -237,6 +195,7 @@ export function TripDetailPage({
           </div>
 
           <div className="grid grid-cols-[1fr_316px] gap-5 mb-6">
+            {/* Calendar grid — always shown */}
             <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden">
               <CalendarHeader
                 month={month}
@@ -274,14 +233,14 @@ export function TripDetailPage({
                         {d}
                       </span>
                       <div className="flex gap-0.5">
-                        {data.fullyFree.slice(0, 3).map((f) => (
+                        {data.fullyFree.filter(f => syncedMemberIds.has(f.id)).slice(0, 3).map((f) => (
                           <div
                             key={f.id}
                             style={{ background: isSel ? "rgba(255,255,255,0.7)" : f.color }}
                             className="w-1 h-1 rounded-full"
                           />
                         ))}
-                        {data.fullyFree.length > 3 && (
+                        {data.fullyFree.filter(f => syncedMemberIds.has(f.id)).length > 3 && (
                           <div
                             style={{ background: isSel ? "rgba(255,255,255,0.4)" : undefined }}
                             className="w-1 h-1 rounded-full bg-slate-400 dark:bg-slate-600"
@@ -295,7 +254,29 @@ export function TripDetailPage({
             </div>
 
             <div className="flex flex-col gap-3.5">
-              {sel && selDay !== null ? (
+              {/* Right panel */}
+              {!calendarsSynced ? (
+                <div className="bg-white dark:bg-slate-800 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl p-7 text-center flex flex-col items-center gap-2.5">
+                  <div className="w-11 h-11 rounded-xl bg-violet-500/10 flex items-center justify-center">
+                    <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth={1.8} strokeLinecap="round">
+                      <rect x={3} y={4} width={18} height={18} rx={2} />
+                      <path d="M16 2v4M8 2v4M3 10h18" />
+                    </svg>
+                  </div>
+                  <div className="text-[13px] font-semibold text-slate-900 dark:text-slate-100 font-syne">No data yet</div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    {isGuest
+                      ? "Sign in to connect your calendar. Days will light up once everyone syncs."
+                      : "Connect your calendar to see availability. Days will light up once everyone syncs."}
+                  </p>
+                  <button
+                    onClick={onOpenProfile}
+                    className="mt-1 px-4 py-2 rounded-lg bg-violet-500 hover:bg-violet-600 text-white text-xs font-semibold font-syne border-none cursor-pointer transition-all"
+                  >
+                    {isGuest ? "Sign in →" : "Connect calendar →"}
+                  </button>
+                </div>
+              ) : sel && selDay !== null ? (
                 <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden">
                   <div className="px-4 py-3.5 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
                     <div>
@@ -303,7 +284,7 @@ export function TripDetailPage({
                         {MONTHS[month].slice(0, 3)} {selDay}
                       </div>
                       <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                        <span className="text-violet-500 font-semibold">{sel.fullyFree.length}</span> of {members.length} available
+                        <span className="text-violet-500 font-semibold">{sel.fullyFree.length}</span> of {syncedMemberIds.size} available
                       </div>
                     </div>
                     {sel.freeSlots.length > 0 && (
@@ -311,42 +292,49 @@ export function TripDetailPage({
                     )}
                   </div>
                   <div className="p-4">
-                    {sel.memberBusy.map(({ f, blocks }) => (
-                      <div key={f.id} className="mb-2.5">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Avatar f={f} size={20} />
-                          <span
-                            style={{ color: blocks.length === 0 ? f.color : undefined }}
-                            className={`text-xs flex-1 font-syne ${blocks.length === 0 ? "font-semibold" : "text-slate-500 dark:text-slate-400"}`}
-                          >
-                            {f.name.split(" ")[0]}
-                          </span>
-                          {blocks.length === 0 ? (
-                            <Pill color={f.color} dot>free</Pill>
-                          ) : (
-                            <span className="text-[10px] text-slate-400">{blocks.length} event{blocks.length > 1 ? "s" : ""}</span>
+                    {sel.memberBusy.filter(({ f }) => syncedMemberIds.has(f.id)).map(({ f, blocks }) => {
+                      const isSynced = true;
+                      return (
+                        <div key={f.id} className="mb-2.5">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Avatar f={f} size={20} />
+                            <span
+                              style={{ color: isSynced && blocks.length === 0 ? f.color : undefined }}
+                              className={`text-xs flex-1 font-syne ${isSynced && blocks.length === 0 ? "font-semibold" : "text-slate-500 dark:text-slate-400"}`}
+                            >
+                              {f.name.split(" ")[0]}
+                            </span>
+                            {!isSynced ? (
+                              <Pill color="#f59e0b">pending</Pill>
+                            ) : blocks.length === 0 ? (
+                              <Pill color={f.color} dot>free</Pill>
+                            ) : (
+                              <span className="text-[10px] text-slate-400">{blocks.length} event{blocks.length > 1 ? "s" : ""}</span>
+                            )}
+                          </div>
+                          {isSynced && (
+                            <div className="h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden relative">
+                              {blocks.length === 0 ? (
+                                <div style={{ backgroundColor: `${f.color}30` }} className="absolute inset-0 rounded-full" />
+                              ) : (
+                                blocks.map((b, bi) => {
+                                  const tot = 10;
+                                  const l = ((b.s - 8) / tot) * 100;
+                                  const w = ((b.e - b.s) / tot) * 100;
+                                  return (
+                                    <div
+                                      key={bi}
+                                      style={{ left: `${l}%`, width: `${w}%`, backgroundColor: `${f.color}60` }}
+                                      className="absolute h-full rounded-sm"
+                                    />
+                                  );
+                                })
+                              )}
+                            </div>
                           )}
                         </div>
-                        <div className="h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden relative">
-                          {blocks.length === 0 ? (
-                            <div style={{ backgroundColor: `${f.color}30` }} className="absolute inset-0 rounded-full" />
-                          ) : (
-                            blocks.map((b, bi) => {
-                              const tot = 10;
-                              const l = ((b.s - 8) / tot) * 100;
-                              const w = ((b.e - b.s) / tot) * 100;
-                              return (
-                                <div
-                                  key={bi}
-                                  style={{ left: `${l}%`, width: `${w}%`, backgroundColor: `${f.color}60` }}
-                                  className="absolute h-full rounded-sm"
-                                />
-                              );
-                            })
-                          )}
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                     {sel.freeSlots.length > 0 && (
                       <div className="px-3.5 py-3 rounded-xl bg-violet-500/5 border border-violet-500/20 mt-1">
                         <div className="text-[10px] font-bold text-violet-500 tracking-widest font-syne mb-2">SHARED FREE WINDOWS</div>
@@ -379,18 +367,25 @@ export function TripDetailPage({
             </div>
           </div>
 
-          <BestWindowsPanel windows={windows} month={month} />
+          <BestWindowsPanel
+            windows={windows}
+            month={month}
+            onSetupCalendar={!calendarsSynced && !isGuest ? onOpenProfile : undefined}
+            isEmpty={!calendarsSynced}
+          />
 
-          <div className="mt-6">
-            <DateProposalSection
-              trip={trip}
-              members={members}
-              onConfirm={(range) => {
-                setConfirmedRange(range);
-                setActiveTab("itinerary");
-              }}
-            />
-          </div>
+          {calendarsSynced && (
+            <div className="mt-6">
+              <DateProposalSection
+                trip={trip}
+                members={members}
+                onConfirm={(range) => {
+                  setConfirmedRange(range);
+                  setActiveTab("itinerary");
+                }}
+              />
+            </div>
+          )}
         </div>
       )}
 

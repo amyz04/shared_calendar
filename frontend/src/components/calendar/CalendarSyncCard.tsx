@@ -53,9 +53,7 @@ export function CalendarSyncCard({
         ) : (
           members.map((f, i) => {
             const isYou = currentUser && f.email === currentUser.email;
-            // current user is synced based on real calendar data
-            // other members are pending until they connect their calendars
-            const synced = isYou ? currentUserSynced : false;
+            const synced = isYou ? currentUserSynced : f.hasSynced;
             const total = busyEventCounts?.[f.id] ?? 0;
 
             return (

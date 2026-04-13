@@ -1,10 +1,9 @@
 import { useMemo, useState, useEffect } from "react";
 import type { Trip, Friend, BusyMap, CellData } from "../types";
 import { daysInMonth, getFreeSlots, computeWindows } from "../utils";
-import { getAvailabilityApi, type AvailabilityData } from "../api/calendar";
+import { getTripAvailabilityApi, type AvailabilityData } from "../api/calendar";
 
 function toHour(iso: string): number {
-  // split on T and take the time part
   const timePart = iso.split("T")[1];
   if (!timePart) return 0;
   const [hours, minutes] = timePart.split(":").map(Number);
@@ -19,15 +18,9 @@ function buildBusyMap(
   const out: { [day: number]: { s: number; e: number }[] } = {};
 
   Object.entries(availability.events).forEach(([dateStr, blocks]) => {
-    // parse date parts directly from the string — avoids timezone shifts
     const [y, m, d] = dateStr.split("-").map(Number);
-
-    // month from API is 1-based
-    // month in JS/React is 0-based
     if (y !== year || m - 1 !== month) return;
-
     if (!blocks.length) return;
-
     out[d] = blocks.map((b) => ({
       s: toHour(b.start),
       e: toHour(b.end),
@@ -38,9 +31,7 @@ function buildBusyMap(
 }
 
 export function useAvailability(trip: Trip | null, members: Friend[]) {
-  const [availability, setAvailability] = useState<AvailabilityData | null>(
-    null,
-  );
+  const [tripAvailability, setTripAvailability] = useState<Record<string, AvailabilityData>>({});
   const [loading, setLoading] = useState(false);
 
   const year = trip?.year ?? new Date().getFullYear();
@@ -52,37 +43,39 @@ export function useAvailability(trip: Trip | null, members: Friend[]) {
     let cancelled = false;
 
     setLoading(true);
-    getAvailabilityApi()
+    getTripAvailabilityApi(trip.id)
       .then((data) => {
-        if (!cancelled) {
-          setAvailability(data);
-        }
+        if (!cancelled) setTripAvailability(data);
       })
-      .catch((err) => console.error("Failed to fetch availability:", err))
+      .catch((err) => console.error("Failed to fetch trip availability:", err))
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
 
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [trip?.id]);
+
+  const syncedMemberIds = useMemo(
+    () => new Set(members.filter(f => tripAvailability[f.email] !== undefined).map(f => f.id)),
+    [tripAvailability, members]
+  );
+
+  console.log("syncedMemberIds:", [...syncedMemberIds]);
+  console.log("members emails:", members.map(m => m.email));
+  console.log("tripAvailability keys:", Object.keys(tripAvailability));
 
   const allBusy = useMemo<BusyMap>(() => {
     const out: BusyMap = {};
-
-    members.forEach((f, i) => {
-      if (i === 0 && availability) {
-        // current user — use real calendar data only
-        out[f.id] = buildBusyMap(availability, year, month);
+    members.forEach((f) => {
+      const avail = tripAvailability[f.email];
+      if (avail) {
+        out[f.id] = buildBusyMap(avail, year, month);
       } else {
-        // other members — empty until their calendars are connected
         out[f.id] = {};
       }
     });
-
     return out;
-  }, [availability, trip?.id, members.length, year, month]);
+  }, [tripAvailability, trip?.id, members.length, year, month]);
 
   const cells = useMemo(() => {
     const out: { [d: number]: CellData } = {};
@@ -91,22 +84,23 @@ export function useAvailability(trip: Trip | null, members: Friend[]) {
         f,
         blocks: allBusy[f.id]?.[d] || [],
       }));
-      const ab = mb.flatMap((x) => x.blocks);
+      const syncedMembers = members.filter(f => syncedMemberIds.has(f.id));
+      const ab = mb.filter(x => syncedMemberIds.has(x.f.id)).flatMap((x) => x.blocks);
       out[d] = {
         memberBusy: mb,
-        freeSlots: getFreeSlots(ab),
-        fullyFree: members.filter(
+        freeSlots: syncedMembers.length > 0 ? getFreeSlots(ab) : [],
+        fullyFree: syncedMembers.filter(
           (f) => (allBusy[f.id]?.[d] || []).length === 0,
         ),
       };
     }
     return out;
-  }, [allBusy, days, members]);
+  }, [allBusy, days, members, syncedMemberIds]);
 
-  const windows = useMemo(
-    () => computeWindows(members, allBusy, year, month),
-    [allBusy, trip?.id],
-  );
+  const windows = useMemo(() => {
+    const syncedMembers = members.filter(f => syncedMemberIds.has(f.id));
+    return computeWindows(syncedMembers, allBusy, year, month);
+  }, [allBusy, trip?.id, syncedMemberIds]);
 
   const busyEventCounts = Object.fromEntries(
     members.map((f) => [
@@ -115,5 +109,5 @@ export function useAvailability(trip: Trip | null, members: Friend[]) {
     ]),
   );
 
-  return { allBusy, cells, windows, busyEventCounts, days, loading };
+  return { allBusy, cells, windows, busyEventCounts, days, loading, syncedMemberIds };
 }
