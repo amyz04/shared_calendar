@@ -1,6 +1,7 @@
 package com.calendarapp.backend.controller;
 
 import com.calendarapp.backend.dto.request.CreateTripRequest;
+import com.calendarapp.backend.dto.response.ItineraryResponse;
 import com.calendarapp.backend.dto.response.TripResponse;
 import com.calendarapp.backend.entity.User;
 import com.calendarapp.backend.service.TripService;
@@ -85,4 +86,10 @@ public class TripController {
             @RequestParam String status) {
         return ResponseEntity.ok(tripService.respondToTrip(currentUser.getId(), tripId, status));
     }
+
+    @GetMapping("/{tripId}/itineraries")
+    public ResponseEntity<List<ItineraryResponse>> getItineraries(
+        @PathVariable String tripId) {
+    return ResponseEntity.ok(tripService.getItineraries(tripId));
+}
 }

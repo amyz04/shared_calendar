@@ -47,17 +47,6 @@ public class EventService {
         eventRepository.save(event);
         return mapToResponse(event);
     }
-
-    public List<EventResponse> getEvents(String itineraryId) {
- 
-        Itinerary itinerary = itineraryRepository.findById(itineraryId)
-                .orElseThrow(() -> new RuntimeException("Itinerary not found"));
-
-        return eventRepository.findByItinerary(itinerary)
-                .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
-    }
         @Transactional
     public EventResponse updateEvent(String userId, String eventId, CreateEventRequest request) {
         Event event = eventRepository.findById(eventId)
