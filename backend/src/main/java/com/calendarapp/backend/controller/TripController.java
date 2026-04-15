@@ -4,6 +4,7 @@ import com.calendarapp.backend.dto.request.CreateTripRequest;
 import com.calendarapp.backend.dto.response.ItineraryResponse;
 import com.calendarapp.backend.dto.response.TripResponse;
 import com.calendarapp.backend.entity.User;
+import com.calendarapp.backend.service.ItineraryService;
 import com.calendarapp.backend.service.TripService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ import java.util.List;
 public class TripController {
 
     private final TripService tripService;
+    private final ItineraryService itineraryService;
 
     @PostMapping
     public ResponseEntity<TripResponse> createTrip(
@@ -89,7 +91,7 @@ public class TripController {
 
     @GetMapping("/{tripId}/itineraries")
     public ResponseEntity<List<ItineraryResponse>> getItineraries(
-        @PathVariable String tripId) {
-    return ResponseEntity.ok(tripService.getItineraries(tripId));
+            @PathVariable String tripId) {
+        return ResponseEntity.ok(itineraryService.getItineraries(tripId));
 }
 }

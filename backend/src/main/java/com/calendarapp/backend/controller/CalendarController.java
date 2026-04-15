@@ -4,12 +4,10 @@ import com.calendarapp.backend.dto.request.CreateCalendarRequest;
 import com.calendarapp.backend.dto.response.AvailabilityResponse;
 import com.calendarapp.backend.dto.response.CalendarResponse;
 import com.calendarapp.backend.dto.response.MessageResponse;
-import com.calendarapp.backend.entity.User;
 import com.calendarapp.backend.repository.UserRepository;
 import com.calendarapp.backend.service.CalendarService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 

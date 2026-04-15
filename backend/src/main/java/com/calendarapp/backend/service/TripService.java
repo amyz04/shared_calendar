@@ -220,17 +220,6 @@ public class TripService {
         return mapToResponse(reloadedTrip, userId);
     }
 
-    // get all itineraries for a trip ordered by day
-    public List<ItineraryResponse> getItineraries(String tripId) {
-        Trip trip = tripRepository.findById(tripId)
-                .orElseThrow(() -> new RuntimeException("Trip not found"));
-
-        return itineraryRepository.findByTripOrderByDayNumberAsc(trip)
-                .stream()
-                .map(this::mapItineraryToResponse)
-                .collect(Collectors.toList());
-    }
-
     // ── helpers ───────────────────────────────────────────────────────────────
 
     private String generateInviteToken() {
@@ -251,24 +240,6 @@ public class TripService {
 
     private EventResponse mappingEventHelper(Event event, String itineraryId){
         return new EventResponse(event.getId(), itineraryId, event.getCreatedBy().getId(), event.getName(), event.getDescription(), event.getLocation(), event.getStartTime(), event.getEndTime(), event.getScope().name(), event.getStatus().name(), event.getCreatedAt());
-    }
-
-    private ItineraryResponse mapItineraryToResponse(
-            com.calendarapp.backend.entity.Itinerary itinerary) {
-        List<EventResponse> events =
-                itinerary.getEvents().stream()
-                        .map(e -> mappingEventHelper(e, itinerary.getId()))
-                        .collect(Collectors.toList());
-
-        return new ItineraryResponse(
-                itinerary.getId(),
-                itinerary.getTrip().getId(),
-                itinerary.getNotes(),
-                itinerary.getDayNumber(),
-                itinerary.getDate() != null ? itinerary.getDate().toString() : null,
-                events,
-                itinerary.getCreatedAt() != null ? itinerary.getCreatedAt().toString() : null
-        );
     }
 
     private TripResponse mapToResponse(Trip trip, String currentUserId) {

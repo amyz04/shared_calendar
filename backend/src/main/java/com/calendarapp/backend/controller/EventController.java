@@ -3,17 +3,14 @@ package com.calendarapp.backend.controller;
 import com.calendarapp.backend.dto.request.CreateEventRequest;
 import com.calendarapp.backend.dto.response.EventResponse;
 import com.calendarapp.backend.dto.response.MessageResponse;
-import com.calendarapp.backend.entity.User;
 import com.calendarapp.backend.repository.UserRepository;
 import com.calendarapp.backend.service.EventService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/itinerary/{itineraryId}/events")
