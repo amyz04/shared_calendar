@@ -39,12 +39,6 @@ public class EventController {
         );
     }
 
-    @GetMapping("/itinerary/{itineraryId}/events")
-    public ResponseEntity<List<EventResponse>> getEvents(
-            @PathVariable String itineraryId) {
-        return ResponseEntity.ok(eventService.getEvents(itineraryId));
-    }
-
     @PutMapping("/itinerary/{itineraryId}/events/{eventId}")
     public ResponseEntity<EventResponse> updateEvent(
             @PathVariable String itineraryId,
