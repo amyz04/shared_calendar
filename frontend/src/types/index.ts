@@ -104,3 +104,46 @@ export interface RegisterData {
   password: string;
   dateOfBirth: string;
 }
+
+export interface VoteResponse {
+  id: string;
+  user: User;
+  vote: "AGREE" | "DISAGREE";
+}
+
+export interface TripDateProposal {
+  id: string;
+  tripId: string;
+  proposedBy: User;
+  startDate: string;
+  endDate: string;
+  status: "PROPOSED" | "CONFIRMED" | "REJECTED";
+  votes: VoteResponse[];
+  agreeCount: number;
+  disagreeCount: number;
+  createdAt: string;
+}
+
+export interface Itinerary {
+  id: string;
+  tripId: string;
+  notes: string;
+  dayNumber: number;
+  date: string;
+  events: TripEvent[];
+  createdAt: string;
+}
+
+export interface TripEvent {
+  id: string;
+  itineraryId: string;
+  name: string;
+  description?: string;
+  location?: string;
+  startTime?: string;
+  endTime?: string;
+  scope: "PERSONAL" | "GROUP";
+  status: "PROPOSED" | "CONFIRMED" | "CANCELLED";
+  createdBy: string;
+  createdAt: string;
+}
