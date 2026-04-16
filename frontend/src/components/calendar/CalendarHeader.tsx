@@ -8,26 +8,18 @@ interface CalendarHeaderProps {
 }
 
 const LEGEND = [
-  ["All free", "bg-violet-500"],
-  ["Some free", "bg-teal-400"],
+  ["All free", "bg-teal-400"],
   ["Conflicts", "bg-red-400"],
 ] as const;
 
-export function CalendarHeader({
-  month,
-  year,
-  subtitle,
-  dimLegend,
-}: CalendarHeaderProps) {
+export function CalendarHeader({ month, year, subtitle, dimLegend }: CalendarHeaderProps) {
   return (
     <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
       <div>
         <div className="text-base font-bold text-slate-900 dark:text-slate-100 font-syne">
           {MONTHS[month]} {year}
         </div>
-        <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-          {subtitle}
-        </div>
+        <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{subtitle}</div>
       </div>
       <div className="flex gap-3">
         {LEGEND.map(([label, bg]) => (

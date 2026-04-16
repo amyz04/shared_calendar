@@ -3,7 +3,26 @@ import type { Friend, TimeBlock, BusyMap } from "./types";
 export const daysInMonth = (y: number, m: number) =>
   new Date(y, m + 1, 0).getDate();
 export const firstDow = (y: number, m: number) => new Date(y, m, 1).getDay();
-export const fmtH = (h: number) => (h >= 13 ? `${h - 12}pm` : `${h}am`);
+
+export const fmtH = (h: number): string => {
+  const totalMins = Math.round(h * 60);
+  const hrs24 = Math.floor(totalMins / 60);
+  const mins = totalMins % 60;
+  const hrs12 = hrs24 % 12 === 0 ? 12 : hrs24 % 12;
+  const ampm = hrs24 >= 12 ? "pm" : "am";
+  return mins === 0
+    ? `${hrs12}${ampm}`
+    : `${hrs12}:${String(mins).padStart(2, "0")}${ampm}`;
+};
+
+export const fmtDuration = (h: number): string => {
+  const totalMins = Math.round(h * 60);
+  const hrs = Math.floor(totalMins / 60);
+  const mins = totalMins % 60;
+  if (hrs === 0) return `${mins}m`;
+  if (mins === 0) return `${hrs}h`;
+  return `${hrs}h ${mins}m`;
+};
 
 export function genBusy(
   seed: number,
@@ -57,25 +76,30 @@ export function getFreeSlots(all: TimeBlock[], s0 = 8, e0 = 18): TimeBlock[] {
   return free.filter((f) => f.e - f.s >= 0.5);
 }
 
+// tripLen: exact number of days to look for. If 0, search all lengths 2-14.
 export function computeWindows(
   members: Friend[],
   allBusy: BusyMap,
   year: number,
   month: number,
+  tripLen: number = 0,
 ) {
-  if (members.length === 0) return []; 
-  
+  if (members.length === 0) return [];
+
   const days = daysInMonth(year, month);
   const results: any[] = [];
-  for (let start = 1; start <= days - 1; start++) {
-    for (let len = 2; len <= Math.min(8, days - start + 1); len++) {
+  const minLen = tripLen > 0 ? tripLen : 2;
+  const maxLen = tripLen > 0 ? tripLen : 14;
+
+  for (let start = 1; start <= days; start++) {
+    for (let len = minLen; len <= Math.min(maxLen, days - start + 1); len++) {
       const end = start + len - 1;
-      const freeNames: string[] = [],
-        conflicts: string[] = [];
+      const freeNames: string[] = [];
+      const conflicts: string[] = [];
       members.forEach((f) => {
         let blocked = false;
         for (let d = start; d <= end; d++) {
-          if ((allBusy[f.id]?.[d] || []).length >= 2) {
+          if ((allBusy[f.id]?.[d] || []).length >= 1) {
             blocked = true;
             break;
           }
@@ -93,13 +117,12 @@ export function computeWindows(
           total: members.length,
           freeNames,
           conflicts,
-          score: Math.round((count / members.length) * 70 + (len / 7) * 30),
+          score: Math.round((count / members.length) * 100),
         });
     }
   }
-  results.sort(
-    (a, b) => b.score - a.score || b.count - a.count || b.len - a.len,
-  );
+
+  results.sort((a, b) => b.score - a.score || b.count - a.count);
   const seen = new Set<string>();
   return results
     .filter((w) => {

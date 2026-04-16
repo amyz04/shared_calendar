@@ -42,6 +42,7 @@ export interface Friend {
 export interface TimeBlock {
   s: number;
   e: number;
+  title?: string;
 }
 
 export interface Trip {
@@ -61,7 +62,6 @@ export interface Trip {
   acceptedCount: number;
   declinedCount: number;
   currentUserStatus: string;
-  // frontend-only fields for calendar display
   year: number;
   month: number;
   dest: string;

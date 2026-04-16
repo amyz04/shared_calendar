@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import type { ReactNode } from "react";
 import type { CalendarSource } from "../types";
 import { getCalendarsApi, deleteCalendarApi } from "../api/calendar";
@@ -9,10 +9,12 @@ interface CalendarContextType {
   calendarsSynced: boolean;
   showProfile: boolean;
   loading: boolean;
+  availabilityRefreshKey: number;
   openProfile: () => void;
   closeProfile: () => void;
   addCalendar: (c: CalendarSource) => void;
   removeCalendar: (id: string) => void;
+  refetchAvailability: () => void;
 }
 
 const CalendarContext = createContext<CalendarContextType | null>(null);
@@ -22,8 +24,8 @@ export function CalendarProvider({ children }: { children: ReactNode }) {
   const [calendars, setCalendars] = useState<CalendarSource[]>([]);
   const [showProfile, setShowProfile] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [availabilityRefreshKey, setAvailabilityRefreshKey] = useState(0);
 
-  // fetch calendars from backend when user logs in
   useEffect(() => {
     if (isAuthenticated) {
       fetchCalendars();
@@ -48,6 +50,7 @@ export function CalendarProvider({ children }: { children: ReactNode }) {
     try {
       await deleteCalendarApi(id);
       setCalendars((prev) => prev.filter((c) => c.id !== id));
+      setAvailabilityRefreshKey((k) => k + 1);
     } catch (err: any) {
       console.error("Failed to delete calendar:", err.message);
     }
@@ -55,7 +58,12 @@ export function CalendarProvider({ children }: { children: ReactNode }) {
 
   function addCalendar(c: CalendarSource) {
     setCalendars((prev) => [...prev, c]);
+    setAvailabilityRefreshKey((k) => k + 1);
   }
+
+  const refetchAvailability = useCallback(() => {
+    setAvailabilityRefreshKey((k) => k + 1);
+  }, []);
 
   return (
     <CalendarContext.Provider
@@ -64,10 +72,12 @@ export function CalendarProvider({ children }: { children: ReactNode }) {
         calendarsSynced: calendars.length > 0,
         showProfile,
         loading,
+        availabilityRefreshKey,
         openProfile: () => setShowProfile(true),
         closeProfile: () => setShowProfile(false),
         addCalendar,
         removeCalendar,
+        refetchAvailability,
       }}
     >
       {children}
@@ -77,7 +87,6 @@ export function CalendarProvider({ children }: { children: ReactNode }) {
 
 export function useCalendars() {
   const ctx = useContext(CalendarContext);
-  if (!ctx)
-    throw new Error("useCalendars must be used within CalendarProvider");
+  if (!ctx) throw new Error("useCalendars must be used within CalendarProvider");
   return ctx;
 }
