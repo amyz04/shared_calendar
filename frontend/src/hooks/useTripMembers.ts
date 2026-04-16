@@ -1,12 +1,11 @@
 import type { Trip, Friend } from "../types";
 import { getUser } from "../api/auth";
 
-export function useTripMembers(trip: Trip): Friend[] {
+export function useTripMembers(trip: Trip | null): Friend[] {
   const loggedInUser = getUser();
 
-  // TODO: replace with real trip.members from backend
-  // when friends API is connected this will map trip.members
-  // to Friend objects using their real avatarColor and names
+  if (!trip) return [];
+
   if (trip.members && trip.members.length > 0) {
     return trip.members
       .filter((m) => m.status === "CONFIRMED")
@@ -20,7 +19,6 @@ export function useTripMembers(trip: Trip): Friend[] {
       }));
   }
 
-  // fallback to current user only if no members loaded yet
   return [
     {
       id: 1,
