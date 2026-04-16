@@ -48,7 +48,7 @@ public class TripService {
         trip.setDetails(request.getDetails());
         trip.setOwner(owner);
         trip.setInviteToken(generateInviteToken());
-        trip.setStatus(Trip.Status.PROPOSED);
+        trip.setStatus(Trip.Status.CONFIRMED);
 
         // add owner as confirmed member
         TripMember ownerMember = new TripMember();
@@ -142,6 +142,11 @@ public class TripService {
         member.setStatus(TripMember.Status.PENDING);
         tripMemberRepository.save(member);
 
+        // set back to PROPOSED since now waiting for responses
+        trip.setStatus(Trip.Status.PROPOSED);
+        tripRepository.save(trip);
+
+
         Trip reloadedTrip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new RuntimeException("Trip not found"));
 
@@ -209,7 +214,12 @@ public class TripService {
                 .allMatch(m -> m.getStatus() == TripMember.Status.CONFIRMED
                         || m.getStatus() == TripMember.Status.REJECTED);
 
-        if (allResponded && !nonOwnerMembers.isEmpty()) {
+        // if (allResponded && !nonOwnerMembers.isEmpty()) {
+        //     trip.setStatus(Trip.Status.CONFIRMED);
+        //     tripRepository.save(trip);
+        // }
+
+        if (allResponded) {
             trip.setStatus(Trip.Status.CONFIRMED);
             tripRepository.save(trip);
         }

@@ -26,11 +26,8 @@ export function TripsPage({
   const confirmedTrips = trips.filter((t) => {
     if (t.currentUserStatus === "REJECTED") return false;
     return (
-      t.status === "CONFIRMED" ||
-      (t.status === "PROPOSED" && t.isOwner) ||
-      (t.status === "PROPOSED" &&
-        !t.isOwner &&
-        t.currentUserStatus === "CONFIRMED")
+      (t.status === "CONFIRMED" && t.currentUserStatus != "REJECTED") ||
+      (t.status === "PROPOSED" && t.isOwner)
     );
   });
 
@@ -46,7 +43,7 @@ export function TripsPage({
     (t) =>
       !t.isOwner &&
       t.status === "PROPOSED" &&
-      t.currentUserStatus === "PENDING"
+      t.currentUserStatus === "PENDING",
   );
 
   const TABS = [
