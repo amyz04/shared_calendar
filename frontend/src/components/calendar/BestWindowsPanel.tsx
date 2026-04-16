@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { MONTHS } from "../../data";
 import { Pill } from "../ui";
 
@@ -17,6 +18,8 @@ interface BestWindowsPanelProps {
   month: number;
   onSetupCalendar?: () => void;
   isEmpty?: boolean;
+  tripLen: number;
+  onTripLenChange: (len: number) => void;
 }
 
 export function BestWindowsPanel({
@@ -24,25 +27,68 @@ export function BestWindowsPanel({
   month,
   onSetupCalendar,
   isEmpty,
+  tripLen,
+  onTripLenChange,
 }: BestWindowsPanelProps) {
+  const [inputVal, setInputVal] = useState(String(tripLen));
+
+  // Keep local input in sync if parent changes tripLen externally
+  useEffect(() => {
+    setInputVal(String(tripLen));
+  }, [tripLen]);
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const raw = e.target.value;
+    setInputVal(raw); // always allow editing freely
+    const num = parseInt(raw);
+    if (!isNaN(num) && num >= 1 && num <= 30) {
+      onTripLenChange(num);
+    }
+  }
+
+  function handleBlur() {
+    // On blur, if empty or invalid, reset to last valid tripLen
+    const num = parseInt(inputVal);
+    if (isNaN(num) || num < 1 || num > 30) {
+      setInputVal(String(tripLen));
+    }
+  }
+
   return (
     <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden">
-      <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-700">
-        <div className="text-sm font-bold text-slate-900 dark:text-slate-100 font-syne">
-          Best availability windows
+      <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between gap-4">
+        <div>
+          <div className="text-sm font-bold text-slate-900 dark:text-slate-100 font-syne">
+            Best availability windows
+          </div>
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            {isEmpty
+              ? "Computed once all members sync their calendars"
+              : "Ranked by group overlap"}
+          </div>
         </div>
-        <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-          {isEmpty ? (
-            "Computed once all members sync their calendars"
-          ) : (
-            <span>
-              Ranked by group overlap ·{" "}
-              <code className="text-[11px] text-slate-400 dark:text-slate-600">
-                GET /api/calendar/availability/windows
-              </code>
+
+        {!isEmpty && (
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-[11px] text-slate-400 dark:text-slate-500 font-syne whitespace-nowrap">
+              Trip length
             </span>
-          )}
-        </div>
+            <div className="flex items-center gap-1">
+              <input
+                type="number"
+                min={1}
+                max={30}
+                value={inputVal}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                className="w-14 px-2 py-1.5 rounded-lg text-[12px] font-semibold font-syne text-center border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-slate-100 outline-none focus:border-violet-500 transition-colors"
+              />
+              <span className="text-[11px] text-slate-400 dark:text-slate-500 font-syne">
+                day{tripLen !== 1 ? "s" : ""}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
       {isEmpty ? (
@@ -68,15 +114,23 @@ export function BestWindowsPanel({
             </button>
           )}
         </div>
+      ) : windows.length === 0 ? (
+        <div className="px-6 py-10 text-center">
+          <div className="text-[13px] font-semibold text-slate-900 dark:text-slate-100 font-syne mb-1">
+            No windows found
+          </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            No {tripLen}-day stretch where enough members are free. Try a different length.
+          </p>
+        </div>
       ) : (
         <div className="grid grid-cols-3">
           {windows.map((w, i) => {
-            const col = w.score > 80 ? "#8b5cf6" : w.score > 65 ? "#2dd4bf" : "#f59e0b";
+            const col = w.score >= 90 ? "#2dd4bf" : w.score >= 70 ? "#8b5cf6" : "#f59e0b";
             const isTop = i === 0;
             return (
               <div
                 key={i}
-                style={{ borderColor: col }}
                 className={`px-5 py-4 relative
                   ${i % 3 < 2 ? "border-r border-slate-200 dark:border-slate-700" : ""}
                   ${i < 3 ? "border-b border-slate-200 dark:border-slate-700" : ""}
@@ -97,7 +151,7 @@ export function BestWindowsPanel({
                       {MONTHS[month].slice(0, 3)} {w.start}–{w.end}
                     </div>
                     <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                      {w.len} days · {w.count}/{w.total} free
+                      {w.len} day{w.len !== 1 ? "s" : ""} · {w.count}/{w.total} free
                     </div>
                   </div>
                   <div

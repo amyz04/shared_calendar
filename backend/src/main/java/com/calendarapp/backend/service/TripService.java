@@ -205,6 +205,8 @@ public class TripService {
 
         member.setStatus(TripMember.Status.valueOf(status.toUpperCase()));
         tripMemberRepository.save(member);
+        member.setStatus(TripMember.Status.valueOf(status.toUpperCase()));
+        tripMemberRepository.save(member);
 
         List<TripMember> nonOwnerMembers = trip.getMembers().stream()
                 .filter(m -> !m.getUser().getId().equals(trip.getOwner().getId()))
@@ -226,7 +228,7 @@ public class TripService {
 
         Trip reloadedTrip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new RuntimeException("Trip not found"));
-
+        
         return mapToResponse(reloadedTrip, userId);
     }
 

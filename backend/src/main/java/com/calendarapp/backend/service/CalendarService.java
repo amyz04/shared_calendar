@@ -40,6 +40,25 @@ public class CalendarService {
     private final CalendarEventRepository calendarEventRepository;
     private final TripRepository tripRepository;
 
+    /**
+     * Converts an ical4j Date or DateTime to LocalDateTime.
+     * Pure DATE values (all-day events) have no time — treat them as
+     * 00:00 (start) or 23:59 (end) so they block the full day.
+     */
+    private LocalDateTime parseDateTime(java.util.Date date, boolean isEnd) {
+        if (date == null) return null;
+        if (date instanceof net.fortuna.ical4j.model.Date
+                && !(date instanceof net.fortuna.ical4j.model.DateTime)) {
+            // All-day event: use UTC date, no zone shift
+            java.time.LocalDate ld = date.toInstant()
+                    .atZone(ZoneId.of("UTC"))
+                    .toLocalDate();
+            return isEnd ? ld.atTime(23, 59) : ld.atStartOfDay();
+        }
+        // Timed event: convert with system zone
+        return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+    }
+
     @Transactional
     public CalendarResponse importCalendar(String userId, String name, MultipartFile file) {
         User user = userRepository.findById(userId)
@@ -72,13 +91,16 @@ public class CalendarService {
 
                 DtStart dtStart = vevent.getStartDate();
                 if (dtStart != null) {
-                    event.setStartTime(dtStart.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+                    event.setStartTime(parseDateTime(dtStart.getDate(), false));
                 }
 
                 DtEnd dtEnd = vevent.getEndDate();
                 if (dtEnd != null) {
-                    event.setEndTime(dtEnd.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+                    event.setEndTime(parseDateTime(dtEnd.getDate(), true));
+                } else if (event.getStartTime() != null) {
+                    event.setEndTime(event.getStartTime().plusHours(1));
                 }
+
                 calendarEventRepository.save(event);
             }
         } catch (Exception e) {
@@ -132,7 +154,6 @@ public class CalendarService {
                         && m.getStatus() == TripMember.Status.CONFIRMED)
                 .forEach(m -> {
                     User user = m.getUser();
-                    // only include if user has at least one calendar
                     if (calendarRepository.existsByUser(user)) {
                         AvailabilityResponse avail = getAvailabilityForUser(user);
                         result.put(user.getEmail(), avail);
