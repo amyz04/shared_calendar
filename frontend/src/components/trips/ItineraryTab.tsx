@@ -44,6 +44,7 @@ export function ItineraryTab({
   const [form, setForm] = useState<EventFormData>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [scope, setScope] = useState<"GROUP" | "PERSONAL">("GROUP");
 
   useEffect(() => {
     if (confirmedStartDate) fetchItineraries();
@@ -81,7 +82,7 @@ export function ItineraryTab({
           endTime: form.endTime
             ? `${itinerary.date}T${form.endTime}`
             : undefined,
-          scope: "GROUP",
+          scope: scope,
         });
         setItineraries((prev) =>
           prev.map((i) =>
@@ -107,7 +108,7 @@ export function ItineraryTab({
           endTime: form.endTime
             ? `${itinerary.date}T${form.endTime}`
             : undefined,
-          scope: "GROUP",
+          scope: scope,
         });
         setItineraries((prev) =>
           prev.map((i) =>
@@ -425,6 +426,30 @@ export function ItineraryTab({
                     rows={2}
                     className={`${inputCls} resize-none`}
                   />
+                </div>
+
+                {/* scope */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setScope("PERSONAL")}
+                    className={`flex-1 py-1.5 rounded-lg text-[12px] font-semibold font-syne border cursor-pointer transition-all ${
+                      scope === "PERSONAL"
+                        ? "bg-yellow-400/20 border-yellow-400/50 text-yellow-500"
+                        : "bg-transparent border-slate-200 dark:border-slate-700 text-slate-500 hover:border-yellow-400/50 hover:text-yellow-400"
+                    }`}
+                  >
+                    PERSONAL
+                  </button>
+                  <button
+                    onClick={() => setScope("GROUP")}
+                    className={`flex-1 py-1.5 rounded-lg text-[12px] font-semibold font-syne border cursor-pointer transition-all ${
+                      scope === "GROUP"
+                        ? "bg-yellow-400/20 border-yellow-400/50 text-yellow-500"
+                        : "bg-transparent border-slate-200 dark:border-slate-700 text-slate-500 hover:border-yellow-400/50 hover:text-yellow-400"
+                    }`}
+                  >
+                    GROUP
+                  </button>
                 </div>
 
                 {error && (
