@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { MONTHS } from "../../data";
 import { Pill } from "../ui";
 
@@ -21,8 +22,6 @@ interface BestWindowsPanelProps {
   onTripLenChange: (len: number) => void;
 }
 
-const DAY_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 10, 14];
-
 export function BestWindowsPanel({
   windows,
   month,
@@ -31,6 +30,30 @@ export function BestWindowsPanel({
   tripLen,
   onTripLenChange,
 }: BestWindowsPanelProps) {
+  const [inputVal, setInputVal] = useState(String(tripLen));
+
+  // Keep local input in sync if parent changes tripLen externally
+  useEffect(() => {
+    setInputVal(String(tripLen));
+  }, [tripLen]);
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const raw = e.target.value;
+    setInputVal(raw); // always allow editing freely
+    const num = parseInt(raw);
+    if (!isNaN(num) && num >= 1 && num <= 30) {
+      onTripLenChange(num);
+    }
+  }
+
+  function handleBlur() {
+    // On blur, if empty or invalid, reset to last valid tripLen
+    const num = parseInt(inputVal);
+    if (isNaN(num) || num < 1 || num > 30) {
+      setInputVal(String(tripLen));
+    }
+  }
+
   return (
     <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden">
       <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between gap-4">
@@ -50,17 +73,20 @@ export function BestWindowsPanel({
             <span className="text-[11px] text-slate-400 dark:text-slate-500 font-syne whitespace-nowrap">
               Trip length
             </span>
-            <select
-              value={tripLen}
-              onChange={(e) => onTripLenChange(Number(e.target.value))}
-              className="px-3 py-1.5 rounded-lg text-[12px] font-semibold font-syne border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-slate-100 cursor-pointer outline-none focus:border-violet-500 transition-colors"
-            >
-              {DAY_OPTIONS.map((d) => (
-                <option key={d} value={d}>
-                  {d} day{d !== 1 ? "s" : ""}
-                </option>
-              ))}
-            </select>
+            <div className="flex items-center gap-1">
+              <input
+                type="number"
+                min={1}
+                max={30}
+                value={inputVal}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                className="w-14 px-2 py-1.5 rounded-lg text-[12px] font-semibold font-syne text-center border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-slate-100 outline-none focus:border-violet-500 transition-colors"
+              />
+              <span className="text-[11px] text-slate-400 dark:text-slate-500 font-syne">
+                day{tripLen !== 1 ? "s" : ""}
+              </span>
+            </div>
           </div>
         )}
       </div>
@@ -94,7 +120,7 @@ export function BestWindowsPanel({
             No windows found
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            No {tripLen}-day stretch where enough members are free. Try a shorter trip length.
+            No {tripLen}-day stretch where enough members are free. Try a different length.
           </p>
         </div>
       ) : (
