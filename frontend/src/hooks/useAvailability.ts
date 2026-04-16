@@ -31,7 +31,9 @@ function buildBusyMap(
 }
 
 export function useAvailability(trip: Trip | null, members: Friend[]) {
-  const [tripAvailability, setTripAvailability] = useState<Record<string, AvailabilityData>>({});
+  const [tripAvailability, setTripAvailability] = useState<
+    Record<string, AvailabilityData>
+  >({});
   const [loading, setLoading] = useState(false);
 
   const year = trip?.year ?? new Date().getFullYear();
@@ -52,17 +54,20 @@ export function useAvailability(trip: Trip | null, members: Friend[]) {
         if (!cancelled) setLoading(false);
       });
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [trip?.id]);
 
   const syncedMemberIds = useMemo(
-    () => new Set(members.filter(f => tripAvailability[f.email] !== undefined).map(f => f.id)),
-    [tripAvailability, members]
+    () =>
+      new Set(
+        members
+          .filter((f) => tripAvailability[f.email] !== undefined)
+          .map((f) => f.id),
+      ),
+    [tripAvailability, members],
   );
-
-  console.log("syncedMemberIds:", [...syncedMemberIds]);
-  console.log("members emails:", members.map(m => m.email));
-  console.log("tripAvailability keys:", Object.keys(tripAvailability));
 
   const allBusy = useMemo<BusyMap>(() => {
     const out: BusyMap = {};
@@ -84,8 +89,10 @@ export function useAvailability(trip: Trip | null, members: Friend[]) {
         f,
         blocks: allBusy[f.id]?.[d] || [],
       }));
-      const syncedMembers = members.filter(f => syncedMemberIds.has(f.id));
-      const ab = mb.filter(x => syncedMemberIds.has(x.f.id)).flatMap((x) => x.blocks);
+      const syncedMembers = members.filter((f) => syncedMemberIds.has(f.id));
+      const ab = mb
+        .filter((x) => syncedMemberIds.has(x.f.id))
+        .flatMap((x) => x.blocks);
       out[d] = {
         memberBusy: mb,
         freeSlots: syncedMembers.length > 0 ? getFreeSlots(ab) : [],
@@ -98,7 +105,7 @@ export function useAvailability(trip: Trip | null, members: Friend[]) {
   }, [allBusy, days, members, syncedMemberIds]);
 
   const windows = useMemo(() => {
-    const syncedMembers = members.filter(f => syncedMemberIds.has(f.id));
+    const syncedMembers = members.filter((f) => syncedMemberIds.has(f.id));
     return computeWindows(syncedMembers, allBusy, year, month);
   }, [allBusy, trip?.id, syncedMemberIds]);
 
@@ -109,5 +116,13 @@ export function useAvailability(trip: Trip | null, members: Friend[]) {
     ]),
   );
 
-  return { allBusy, cells, windows, busyEventCounts, days, loading, syncedMemberIds };
+  return {
+    allBusy,
+    cells,
+    windows,
+    busyEventCounts,
+    days,
+    loading,
+    syncedMemberIds,
+  };
 }

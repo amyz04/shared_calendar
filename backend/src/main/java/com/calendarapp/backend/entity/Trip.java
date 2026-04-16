@@ -41,7 +41,10 @@ public class Trip {
     private List<TripMember> members = new ArrayList<>();
 
     @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, orphanRemoval = true)
-private List<Itinerary> itineraries = new ArrayList<>();
+    private List<Itinerary> itineraries = new ArrayList<>();
+
+    @OneToMany(mappedBy = "trip", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<TripDateProposal> proposals = new ArrayList<>();
 
     @Column(name = "start_date", nullable = false)
     private LocalDate startDate;
