@@ -102,6 +102,8 @@ export function CalendarEmptyState({
         month={month}
         onSetupCalendar={!isGuest ? onOpenProfile : undefined}
         isEmpty
+        tripLen={3}
+        onTripLenChange={() => {}}
       />
     </div>
   );

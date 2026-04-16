@@ -4,7 +4,6 @@ export const daysInMonth = (y: number, m: number) =>
   new Date(y, m + 1, 0).getDate();
 export const firstDow = (y: number, m: number) => new Date(y, m, 1).getDay();
 
-// Formats a decimal hour: 13.75 → "1:45pm", 9 → "9am"
 export const fmtH = (h: number): string => {
   const totalMins = Math.round(h * 60);
   const hrs24 = Math.floor(totalMins / 60);
@@ -16,7 +15,6 @@ export const fmtH = (h: number): string => {
     : `${hrs12}:${String(mins).padStart(2, "0")}${ampm}`;
 };
 
-// Formats a decimal duration: 8.75 → "8h 45m", 1.5 → "1h 30m", 0.5 → "30m"
 export const fmtDuration = (h: number): string => {
   const totalMins = Math.round(h * 60);
   const hrs = Math.floor(totalMins / 60);
@@ -78,21 +76,26 @@ export function getFreeSlots(all: TimeBlock[], s0 = 8, e0 = 18): TimeBlock[] {
   return free.filter((f) => f.e - f.s >= 0.5);
 }
 
+// tripLen: exact number of days to look for. If 0, search all lengths 2-14.
 export function computeWindows(
   members: Friend[],
   allBusy: BusyMap,
   year: number,
   month: number,
+  tripLen: number = 0,
 ) {
   if (members.length === 0) return [];
 
   const days = daysInMonth(year, month);
   const results: any[] = [];
-  for (let start = 1; start <= days - 1; start++) {
-    for (let len = 2; len <= Math.min(8, days - start + 1); len++) {
+  const minLen = tripLen > 0 ? tripLen : 2;
+  const maxLen = tripLen > 0 ? tripLen : 14;
+
+  for (let start = 1; start <= days; start++) {
+    for (let len = minLen; len <= Math.min(maxLen, days - start + 1); len++) {
       const end = start + len - 1;
-      const freeNames: string[] = [],
-        conflicts: string[] = [];
+      const freeNames: string[] = [];
+      const conflicts: string[] = [];
       members.forEach((f) => {
         let blocked = false;
         for (let d = start; d <= end; d++) {
@@ -114,13 +117,12 @@ export function computeWindows(
           total: members.length,
           freeNames,
           conflicts,
-          score: Math.round((count / members.length) * 70 + (len / 7) * 30),
+          score: Math.round((count / members.length) * 100),
         });
     }
   }
-  results.sort(
-    (a, b) => b.score - a.score || b.count - a.count || b.len - a.len,
-  );
+
+  results.sort((a, b) => b.score - a.score || b.count - a.count);
   const seen = new Set<string>();
   return results
     .filter((w) => {

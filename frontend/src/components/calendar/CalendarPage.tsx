@@ -28,12 +28,14 @@ export function CalendarPage({
   isGuest,
 }: CalendarPageProps) {
   const [selDay, setSelDay] = useState<number | null>(null);
+  const [tripLen, setTripLen] = useState(3);
 
   const trip = trips.find((t) => t.id === activeTripId) ?? trips[0] ?? null;
   const members = useTripMembers(trip);
   const { cells, windows, busyEventCounts, days, loading, syncedMemberIds } = useAvailability(
     trip,
     members,
+    tripLen,
   );
 
   if (!calendarsSynced) {
@@ -187,13 +189,9 @@ export function CalendarPage({
                         </span>
                       )}
                     </div>
-                    {/* Timeline bar */}
                     <div className="h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden relative mb-1.5">
                       {blocks.length === 0 ? (
-                        <div
-                          style={{ backgroundColor: `${f.color}30` }}
-                          className="absolute inset-0 rounded-full"
-                        />
+                        <div style={{ backgroundColor: `${f.color}30` }} className="absolute inset-0 rounded-full" />
                       ) : (
                         blocks.map((b, bi) => {
                           const tot = 10;
@@ -209,7 +207,6 @@ export function CalendarPage({
                         })
                       )}
                     </div>
-                    {/* Event titles */}
                     {blocks.map((b, bi) => (
                       <div key={bi} className="flex items-center gap-1.5 ml-1 mb-0.5">
                         <div style={{ backgroundColor: f.color }} className="w-1 h-1 rounded-full shrink-0" />
@@ -229,14 +226,9 @@ export function CalendarPage({
                       SHARED FREE WINDOWS
                     </div>
                     {sel.freeSlots.map((sl, i) => (
-                      <div
-                        key={i}
-                        className={`flex items-center gap-2 ${i < sel.freeSlots.length - 1 ? "mb-1.5" : ""}`}
-                      >
+                      <div key={i} className={`flex items-center gap-2 ${i < sel.freeSlots.length - 1 ? "mb-1.5" : ""}`}>
                         <div className="w-1.5 h-1.5 rounded-full bg-violet-500 shrink-0" />
-                        <span className="text-xs text-violet-500 font-medium">
-                          {fmtH(sl.s)} – {fmtH(sl.e)}
-                        </span>
+                        <span className="text-xs text-violet-500 font-medium">{fmtH(sl.s)} – {fmtH(sl.e)}</span>
                         <span className="text-[11px] text-slate-500 dark:text-slate-400 ml-auto">
                           {fmtDuration(sl.e - sl.s)}
                         </span>
@@ -266,7 +258,12 @@ export function CalendarPage({
         </div>
       </div>
 
-      <BestWindowsPanel windows={windows} month={month} />
+      <BestWindowsPanel
+        windows={windows}
+        month={month}
+        tripLen={tripLen}
+        onTripLenChange={setTripLen}
+      />
     </div>
   );
 }

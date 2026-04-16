@@ -17,32 +17,52 @@ interface BestWindowsPanelProps {
   month: number;
   onSetupCalendar?: () => void;
   isEmpty?: boolean;
+  tripLen: number;
+  onTripLenChange: (len: number) => void;
 }
+
+const DAY_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 10, 14];
 
 export function BestWindowsPanel({
   windows,
   month,
   onSetupCalendar,
   isEmpty,
+  tripLen,
+  onTripLenChange,
 }: BestWindowsPanelProps) {
   return (
     <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden">
-      <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-700">
-        <div className="text-sm font-bold text-slate-900 dark:text-slate-100 font-syne">
-          Best availability windows
+      <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between gap-4">
+        <div>
+          <div className="text-sm font-bold text-slate-900 dark:text-slate-100 font-syne">
+            Best availability windows
+          </div>
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            {isEmpty
+              ? "Computed once all members sync their calendars"
+              : "Ranked by group overlap"}
+          </div>
         </div>
-        <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-          {isEmpty ? (
-            "Computed once all members sync their calendars"
-          ) : (
-            <span>
-              Ranked by group overlap ·{" "}
-              <code className="text-[11px] text-slate-400 dark:text-slate-600">
-                GET /api/calendar/availability/windows
-              </code>
+
+        {!isEmpty && (
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-[11px] text-slate-400 dark:text-slate-500 font-syne whitespace-nowrap">
+              Trip length
             </span>
-          )}
-        </div>
+            <select
+              value={tripLen}
+              onChange={(e) => onTripLenChange(Number(e.target.value))}
+              className="px-3 py-1.5 rounded-lg text-[12px] font-semibold font-syne border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-slate-100 cursor-pointer outline-none focus:border-violet-500 transition-colors"
+            >
+              {DAY_OPTIONS.map((d) => (
+                <option key={d} value={d}>
+                  {d} day{d !== 1 ? "s" : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       {isEmpty ? (
@@ -68,15 +88,23 @@ export function BestWindowsPanel({
             </button>
           )}
         </div>
+      ) : windows.length === 0 ? (
+        <div className="px-6 py-10 text-center">
+          <div className="text-[13px] font-semibold text-slate-900 dark:text-slate-100 font-syne mb-1">
+            No windows found
+          </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            No {tripLen}-day stretch where enough members are free. Try a shorter trip length.
+          </p>
+        </div>
       ) : (
         <div className="grid grid-cols-3">
           {windows.map((w, i) => {
-            const col = w.score > 80 ? "#8b5cf6" : w.score > 65 ? "#2dd4bf" : "#f59e0b";
+            const col = w.score >= 90 ? "#2dd4bf" : w.score >= 70 ? "#8b5cf6" : "#f59e0b";
             const isTop = i === 0;
             return (
               <div
                 key={i}
-                style={{ borderColor: col }}
                 className={`px-5 py-4 relative
                   ${i % 3 < 2 ? "border-r border-slate-200 dark:border-slate-700" : ""}
                   ${i < 3 ? "border-b border-slate-200 dark:border-slate-700" : ""}
@@ -97,7 +125,7 @@ export function BestWindowsPanel({
                       {MONTHS[month].slice(0, 3)} {w.start}–{w.end}
                     </div>
                     <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                      {w.len} days · {w.count}/{w.total} free
+                      {w.len} day{w.len !== 1 ? "s" : ""} · {w.count}/{w.total} free
                     </div>
                   </div>
                   <div

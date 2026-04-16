@@ -37,6 +37,7 @@ export function TripDetailPage({
   const [confirmedRange, setConfirmedRange] = useState<ConfirmedRange | null>(null);
   const [selDay, setSelDay] = useState<number | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [tripLen, setTripLen] = useState(3);
 
   const { deleteTrip } = useTrips();
   const currentUser = getUser();
@@ -44,7 +45,7 @@ export function TripDetailPage({
 
   const trip = trips.find((t) => t.id === activeTripId) ?? trips[0] ?? null;
   const members = useTripMembers(trip!);
-  const { cells, windows, busyEventCounts, days, syncedMemberIds } = useAvailability(trip!, members);
+  const { cells, windows, busyEventCounts, days, syncedMemberIds } = useAvailability(trip!, members, tripLen);
 
   const isOwner = currentUser?.id === trip?.owner?.id;
 
@@ -299,7 +300,6 @@ export function TripDetailPage({
                             <span className="text-[10px] text-slate-400">{blocks.length} event{blocks.length > 1 ? "s" : ""}</span>
                           )}
                         </div>
-                        {/* Timeline bar */}
                         <div className="h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden relative mb-1.5">
                           {blocks.length === 0 ? (
                             <div style={{ backgroundColor: `${f.color}30` }} className="absolute inset-0 rounded-full" />
@@ -318,7 +318,6 @@ export function TripDetailPage({
                             })
                           )}
                         </div>
-                        {/* Event titles */}
                         {blocks.map((b, bi) => (
                           <div key={bi} className="flex items-center gap-1.5 ml-1 mb-0.5">
                             <div style={{ backgroundColor: f.color }} className="w-1 h-1 rounded-full shrink-0" />
@@ -369,6 +368,8 @@ export function TripDetailPage({
             month={month}
             onSetupCalendar={!calendarsSynced && !isGuest ? onOpenProfile : undefined}
             isEmpty={!calendarsSynced}
+            tripLen={tripLen}
+            onTripLenChange={setTripLen}
           />
 
           {calendarsSynced && (
