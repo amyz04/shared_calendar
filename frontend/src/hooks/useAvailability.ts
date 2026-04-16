@@ -14,8 +14,8 @@ function buildBusyMap(
   availability: AvailabilityData,
   year: number,
   month: number,
-): { [day: number]: { s: number; e: number }[] } {
-  const out: { [day: number]: { s: number; e: number }[] } = {};
+): { [day: number]: { s: number; e: number; title?: string }[] } {
+  const out: { [day: number]: { s: number; e: number; title?: string }[] } = {};
 
   Object.entries(availability.events).forEach(([dateStr, blocks]) => {
     const [y, m, d] = dateStr.split("-").map(Number);
@@ -24,6 +24,7 @@ function buildBusyMap(
     out[d] = blocks.map((b) => ({
       s: toHour(b.start),
       e: toHour(b.end),
+      title: b.title,
     }));
   });
 
@@ -59,10 +60,6 @@ export function useAvailability(trip: Trip | null, members: Friend[]) {
     () => new Set(members.filter(f => tripAvailability[f.email] !== undefined).map(f => f.id)),
     [tripAvailability, members]
   );
-
-  console.log("syncedMemberIds:", [...syncedMemberIds]);
-  console.log("members emails:", members.map(m => m.email));
-  console.log("tripAvailability keys:", Object.keys(tripAvailability));
 
   const allBusy = useMemo<BusyMap>(() => {
     const out: BusyMap = {};

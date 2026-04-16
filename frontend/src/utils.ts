@@ -3,7 +3,28 @@ import type { Friend, TimeBlock, BusyMap } from "./types";
 export const daysInMonth = (y: number, m: number) =>
   new Date(y, m + 1, 0).getDate();
 export const firstDow = (y: number, m: number) => new Date(y, m, 1).getDay();
-export const fmtH = (h: number) => (h >= 13 ? `${h - 12}pm` : `${h}am`);
+
+// Formats a decimal hour: 13.75 → "1:45pm", 9 → "9am"
+export const fmtH = (h: number): string => {
+  const totalMins = Math.round(h * 60);
+  const hrs24 = Math.floor(totalMins / 60);
+  const mins = totalMins % 60;
+  const hrs12 = hrs24 % 12 === 0 ? 12 : hrs24 % 12;
+  const ampm = hrs24 >= 12 ? "pm" : "am";
+  return mins === 0
+    ? `${hrs12}${ampm}`
+    : `${hrs12}:${String(mins).padStart(2, "0")}${ampm}`;
+};
+
+// Formats a decimal duration: 8.75 → "8h 45m", 1.5 → "1h 30m", 0.5 → "30m"
+export const fmtDuration = (h: number): string => {
+  const totalMins = Math.round(h * 60);
+  const hrs = Math.floor(totalMins / 60);
+  const mins = totalMins % 60;
+  if (hrs === 0) return `${mins}m`;
+  if (mins === 0) return `${hrs}h`;
+  return `${hrs}h ${mins}m`;
+};
 
 export function genBusy(
   seed: number,
@@ -63,8 +84,8 @@ export function computeWindows(
   year: number,
   month: number,
 ) {
-  if (members.length === 0) return []; 
-  
+  if (members.length === 0) return [];
+
   const days = daysInMonth(year, month);
   const results: any[] = [];
   for (let start = 1; start <= days - 1; start++) {
@@ -75,7 +96,7 @@ export function computeWindows(
       members.forEach((f) => {
         let blocked = false;
         for (let d = start; d <= end; d++) {
-          if ((allBusy[f.id]?.[d] || []).length >= 2) {
+          if ((allBusy[f.id]?.[d] || []).length >= 1) {
             blocked = true;
             break;
           }

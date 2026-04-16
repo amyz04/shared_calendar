@@ -8,7 +8,7 @@ import { BestWindowsPanel } from "../calendar/BestWindowsPanel";
 import { DateProposalSection } from "./DateProposalSection";
 import { ItineraryTab } from "./ItineraryTab";
 import { MONTHS } from "../../data";
-import { firstDow, fmtH } from "../../utils";
+import { firstDow, fmtH, fmtDuration } from "../../utils";
 import { useAvailability } from "../../hooks/useAvailability";
 import { useTripMembers } from "../../hooks/useTripMembers";
 import type { ConfirmedRange } from "./tripUtils";
@@ -81,12 +81,10 @@ export function TripDetailPage({
   const dayStatus = (d: number) => {
     const syncedCount = syncedMemberIds.size;
     if (syncedCount === 0) return "busy";
-    const r = cells[d].fullyFree.length / syncedCount;
-    return r === 1 ? "free" : r >= 0.5 ? "partial" : "busy";
+    return cells[d].fullyFree.length === syncedCount ? "free" : "busy";
   };
 
-  const statusColor = (s: string) =>
-    s === "free" ? "#8b5cf6" : s === "partial" ? "#2dd4bf" : "#f87171";
+  const statusColor = (s: string) => (s === "free" ? "#2dd4bf" : "#f87171");
 
   const sel = selDay !== null ? cells[selDay] : null;
 
@@ -165,6 +163,7 @@ export function TripDetailPage({
         </div>
       </div>
 
+      {/* Tabs */}
       <div className="flex gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl mb-6 w-fit">
         {TABS.map((tab) => (
           <button
@@ -195,7 +194,6 @@ export function TripDetailPage({
           </div>
 
           <div className="grid grid-cols-[1fr_316px] gap-5 mb-6">
-            {/* Calendar grid — always shown */}
             <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden">
               <CalendarHeader
                 month={month}
@@ -215,14 +213,8 @@ export function TripDetailPage({
                       key={d}
                       onClick={() => setSelDay(isSel ? null : d)}
                       style={{
-                        background: isSel
-                          ? col
-                          : st === "free"
-                            ? `${col}18`
-                            : st === "partial"
-                              ? `${col}10`
-                              : "transparent",
-                        borderColor: isSel ? col : `${col}${st === "busy" ? "30" : "40"}`,
+                        background: isSel ? col : st === "free" ? `${col}25` : "transparent",
+                        borderColor: isSel ? col : `${col}${st === "busy" ? "30" : "50"}`,
                       }}
                       className="aspect-square rounded-lg cursor-pointer border flex flex-col items-center justify-center gap-0.5 transition-all hover:opacity-90"
                     >
@@ -254,7 +246,6 @@ export function TripDetailPage({
             </div>
 
             <div className="flex flex-col gap-3.5">
-              {/* Right panel */}
               {!calendarsSynced ? (
                 <div className="bg-white dark:bg-slate-800 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl p-7 text-center flex flex-col items-center gap-2.5">
                   <div className="w-11 h-11 rounded-xl bg-violet-500/10 flex items-center justify-center">
@@ -292,49 +283,55 @@ export function TripDetailPage({
                     )}
                   </div>
                   <div className="p-4">
-                    {sel.memberBusy.filter(({ f }) => syncedMemberIds.has(f.id)).map(({ f, blocks }) => {
-                      const isSynced = true;
-                      return (
-                        <div key={f.id} className="mb-2.5">
-                          <div className="flex items-center gap-2 mb-1">
-                            <Avatar f={f} size={20} />
-                            <span
-                              style={{ color: isSynced && blocks.length === 0 ? f.color : undefined }}
-                              className={`text-xs flex-1 font-syne ${isSynced && blocks.length === 0 ? "font-semibold" : "text-slate-500 dark:text-slate-400"}`}
-                            >
-                              {f.name.split(" ")[0]}
-                            </span>
-                            {!isSynced ? (
-                              <Pill color="#f59e0b">pending</Pill>
-                            ) : blocks.length === 0 ? (
-                              <Pill color={f.color} dot>free</Pill>
-                            ) : (
-                              <span className="text-[10px] text-slate-400">{blocks.length} event{blocks.length > 1 ? "s" : ""}</span>
-                            )}
-                          </div>
-                          {isSynced && (
-                            <div className="h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden relative">
-                              {blocks.length === 0 ? (
-                                <div style={{ backgroundColor: `${f.color}30` }} className="absolute inset-0 rounded-full" />
-                              ) : (
-                                blocks.map((b, bi) => {
-                                  const tot = 10;
-                                  const l = ((b.s - 8) / tot) * 100;
-                                  const w = ((b.e - b.s) / tot) * 100;
-                                  return (
-                                    <div
-                                      key={bi}
-                                      style={{ left: `${l}%`, width: `${w}%`, backgroundColor: `${f.color}60` }}
-                                      className="absolute h-full rounded-sm"
-                                    />
-                                  );
-                                })
-                              )}
-                            </div>
+                    {sel.memberBusy.filter(({ f }) => syncedMemberIds.has(f.id)).map(({ f, blocks }) => (
+                      <div key={f.id} className="mb-3">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Avatar f={f} size={20} />
+                          <span
+                            style={{ color: blocks.length === 0 ? f.color : undefined }}
+                            className={`text-xs flex-1 font-syne ${blocks.length === 0 ? "font-semibold" : "text-slate-500 dark:text-slate-400"}`}
+                          >
+                            {f.name.split(" ")[0]}
+                          </span>
+                          {blocks.length === 0 ? (
+                            <Pill color={f.color} dot>free</Pill>
+                          ) : (
+                            <span className="text-[10px] text-slate-400">{blocks.length} event{blocks.length > 1 ? "s" : ""}</span>
                           )}
                         </div>
-                      );
-                    })}
+                        {/* Timeline bar */}
+                        <div className="h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden relative mb-1.5">
+                          {blocks.length === 0 ? (
+                            <div style={{ backgroundColor: `${f.color}30` }} className="absolute inset-0 rounded-full" />
+                          ) : (
+                            blocks.map((b, bi) => {
+                              const tot = 10;
+                              const l = ((b.s - 8) / tot) * 100;
+                              const w = ((b.e - b.s) / tot) * 100;
+                              return (
+                                <div
+                                  key={bi}
+                                  style={{ left: `${l}%`, width: `${w}%`, backgroundColor: `${f.color}60` }}
+                                  className="absolute h-full rounded-sm"
+                                />
+                              );
+                            })
+                          )}
+                        </div>
+                        {/* Event titles */}
+                        {blocks.map((b, bi) => (
+                          <div key={bi} className="flex items-center gap-1.5 ml-1 mb-0.5">
+                            <div style={{ backgroundColor: f.color }} className="w-1 h-1 rounded-full shrink-0" />
+                            <span className="text-[11px] text-slate-600 dark:text-slate-300 font-syne truncate flex-1">
+                              {b.title ?? "Event"}
+                            </span>
+                            <span className="text-[10px] text-slate-400 shrink-0">
+                              {fmtH(b.s)}–{fmtH(b.e)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ))}
                     {sel.freeSlots.length > 0 && (
                       <div className="px-3.5 py-3 rounded-xl bg-violet-500/5 border border-violet-500/20 mt-1">
                         <div className="text-[10px] font-bold text-violet-500 tracking-widest font-syne mb-2">SHARED FREE WINDOWS</div>
@@ -342,7 +339,7 @@ export function TripDetailPage({
                           <div key={i} className={`flex items-center gap-2 ${i < sel.freeSlots.length - 1 ? "mb-1.5" : ""}`}>
                             <div className="w-1.5 h-1.5 rounded-full bg-violet-500 shrink-0" />
                             <span className="text-xs text-violet-500 font-medium">{fmtH(sl.s)} – {fmtH(sl.e)}</span>
-                            <span className="text-[11px] text-slate-500 ml-auto">{sl.e - sl.s}h</span>
+                            <span className="text-[11px] text-slate-500 ml-auto">{fmtDuration(sl.e - sl.s)}</span>
                           </div>
                         ))}
                       </div>

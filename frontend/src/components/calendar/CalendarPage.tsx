@@ -9,7 +9,7 @@ import { CalendarGrid } from "./CalendarGrid";
 import { CalendarSyncCard } from "./CalendarSyncCard";
 import { BestWindowsPanel } from "./BestWindowsPanel";
 import { MONTHS } from "../../data";
-import { firstDow, fmtH } from "../../utils";
+import { firstDow, fmtH, fmtDuration } from "../../utils";
 
 interface CalendarPageProps {
   trips: Trip[];
@@ -31,15 +31,13 @@ export function CalendarPage({
 
   const trip = trips.find((t) => t.id === activeTripId) ?? trips[0] ?? null;
   const members = useTripMembers(trip);
-  const { cells, windows, busyEventCounts, days, loading } = useAvailability(
+  const { cells, windows, busyEventCounts, days, loading, syncedMemberIds } = useAvailability(
     trip,
     members,
   );
 
   if (!calendarsSynced) {
-    return (
-      <CalendarEmptyState onOpenProfile={onOpenProfile} isGuest={isGuest} />
-    );
+    return <CalendarEmptyState onOpenProfile={onOpenProfile} isGuest={isGuest} />;
   }
 
   if (!trip) {
@@ -59,12 +57,12 @@ export function CalendarPage({
   const fd = firstDow(year, month);
 
   const dayStatus = (d: number) => {
-    const r = cells[d].fullyFree.length / members.length;
-    return r === 1 ? "free" : r >= 0.5 ? "partial" : "busy";
+    const syncedCount = syncedMemberIds?.size ?? members.length;
+    if (syncedCount === 0) return "busy";
+    return cells[d].fullyFree.length === syncedCount ? "free" : "busy";
   };
 
-  const statusColor = (s: string) =>
-    s === "free" ? "#8b5cf6" : s === "partial" ? "#2dd4bf" : "#f87171";
+  const statusColor = (s: string) => (s === "free" ? "#2dd4bf" : "#f87171");
 
   const sel = selDay !== null ? cells[selDay] : null;
 
@@ -93,10 +91,7 @@ export function CalendarPage({
         >
           <span className="text-[13px]">{trip.cover}</span>
           {trip.name}
-          <span
-            style={{ backgroundColor: "#8b5cf620" }}
-            className="text-[11px] px-1.5 py-0.5 rounded-full"
-          >
+          <span style={{ backgroundColor: "#8b5cf620" }} className="text-[11px] px-1.5 py-0.5 rounded-full">
             {members.length}
           </span>
         </div>
@@ -122,16 +117,8 @@ export function CalendarPage({
                   key={d}
                   onClick={() => setSelDay(isSel ? null : d)}
                   style={{
-                    background: isSel
-                      ? col
-                      : st === "free"
-                        ? `${col}18`
-                        : st === "partial"
-                          ? `${col}10`
-                          : "transparent",
-                    borderColor: isSel
-                      ? col
-                      : `${col}${st === "busy" ? "30" : "40"}`,
+                    background: isSel ? col : st === "free" ? `${col}25` : "transparent",
+                    borderColor: isSel ? col : `${col}${st === "busy" ? "30" : "50"}`,
                   }}
                   className="aspect-square rounded-lg cursor-pointer border flex flex-col items-center justify-center gap-0.5 transition-all hover:opacity-90"
                 >
@@ -145,19 +132,13 @@ export function CalendarPage({
                     {data.fullyFree.slice(0, 3).map((f) => (
                       <div
                         key={f.id}
-                        style={{
-                          background: isSel ? "rgba(255,255,255,0.7)" : f.color,
-                        }}
+                        style={{ background: isSel ? "rgba(255,255,255,0.7)" : f.color }}
                         className="w-1 h-1 rounded-full"
                       />
                     ))}
                     {data.fullyFree.length > 3 && (
                       <div
-                        style={{
-                          background: isSel
-                            ? "rgba(255,255,255,0.4)"
-                            : undefined,
-                        }}
+                        style={{ background: isSel ? "rgba(255,255,255,0.4)" : undefined }}
                         className="w-1 h-1 rounded-full bg-slate-400 dark:bg-slate-600"
                       />
                     )}
@@ -177,43 +158,37 @@ export function CalendarPage({
                     {MONTHS[month].slice(0, 3)} {selDay}
                   </div>
                   <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                    <span className="text-violet-500 font-semibold">
-                      {sel.fullyFree.length}
-                    </span>{" "}
-                    of {members.length} available
+                    <span className="text-violet-500 font-semibold">{sel.fullyFree.length}</span>{" "}
+                    of {syncedMemberIds.size} available
                   </div>
                 </div>
                 {sel.freeSlots.length > 0 && (
                   <Pill color="#8b5cf6">
-                    {sel.freeSlots.length} window
-                    {sel.freeSlots.length > 1 ? "s" : ""}
+                    {sel.freeSlots.length} window{sel.freeSlots.length > 1 ? "s" : ""}
                   </Pill>
                 )}
               </div>
               <div className="p-4">
                 {sel.memberBusy.map(({ f, blocks }) => (
-                  <div key={f.id} className="mb-2.5">
+                  <div key={f.id} className="mb-3">
                     <div className="flex items-center gap-2 mb-1">
                       <Avatar f={f} size={20} />
                       <span
-                        style={{
-                          color: blocks.length === 0 ? f.color : undefined,
-                        }}
+                        style={{ color: blocks.length === 0 ? f.color : undefined }}
                         className={`text-xs flex-1 font-syne ${blocks.length === 0 ? "font-semibold" : "text-slate-500 dark:text-slate-400"}`}
                       >
                         {f.name.split(" ")[0]}
                       </span>
                       {blocks.length === 0 ? (
-                        <Pill color={f.color} dot>
-                          free
-                        </Pill>
+                        <Pill color={f.color} dot>free</Pill>
                       ) : (
                         <span className="text-[10px] text-slate-400 dark:text-slate-600">
                           {blocks.length} event{blocks.length > 1 ? "s" : ""}
                         </span>
                       )}
                     </div>
-                    <div className="h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden relative">
+                    {/* Timeline bar */}
+                    <div className="h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden relative mb-1.5">
                       {blocks.length === 0 ? (
                         <div
                           style={{ backgroundColor: `${f.color}30` }}
@@ -227,17 +202,25 @@ export function CalendarPage({
                           return (
                             <div
                               key={bi}
-                              style={{
-                                left: `${l}%`,
-                                width: `${w}%`,
-                                backgroundColor: `${f.color}60`,
-                              }}
+                              style={{ left: `${l}%`, width: `${w}%`, backgroundColor: `${f.color}60` }}
                               className="absolute h-full rounded-sm"
                             />
                           );
                         })
                       )}
                     </div>
+                    {/* Event titles */}
+                    {blocks.map((b, bi) => (
+                      <div key={bi} className="flex items-center gap-1.5 ml-1 mb-0.5">
+                        <div style={{ backgroundColor: f.color }} className="w-1 h-1 rounded-full shrink-0" />
+                        <span className="text-[11px] text-slate-600 dark:text-slate-300 font-syne truncate flex-1">
+                          {b.title ?? "Event"}
+                        </span>
+                        <span className="text-[10px] text-slate-400 shrink-0">
+                          {fmtH(b.s)}–{fmtH(b.e)}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 ))}
                 {sel.freeSlots.length > 0 && (
@@ -255,7 +238,7 @@ export function CalendarPage({
                           {fmtH(sl.s)} – {fmtH(sl.e)}
                         </span>
                         <span className="text-[11px] text-slate-500 dark:text-slate-400 ml-auto">
-                          {sl.e - sl.s}h
+                          {fmtDuration(sl.e - sl.s)}
                         </span>
                       </div>
                     ))}
@@ -266,15 +249,7 @@ export function CalendarPage({
           ) : (
             <div className="bg-white dark:bg-slate-800 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl p-7 text-center flex flex-col items-center gap-2.5">
               <div className="w-11 h-11 rounded-xl bg-violet-500/10 flex items-center justify-center">
-                <svg
-                  width={20}
-                  height={20}
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#8b5cf6"
-                  strokeWidth={1.8}
-                  strokeLinecap="round"
-                >
+                <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth={1.8} strokeLinecap="round">
                   <rect x={3} y={4} width={18} height={18} rx={2} />
                   <path d="M16 2v4M8 2v4M3 10h18" />
                 </svg>
@@ -287,10 +262,7 @@ export function CalendarPage({
               </p>
             </div>
           )}
-          <CalendarSyncCard
-            members={members}
-            busyEventCounts={busyEventCounts}
-          />
+          <CalendarSyncCard members={members} busyEventCounts={busyEventCounts} />
         </div>
       </div>
 
