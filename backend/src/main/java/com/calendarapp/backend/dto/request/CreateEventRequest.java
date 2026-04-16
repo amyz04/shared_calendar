@@ -13,7 +13,6 @@ public class CreateEventRequest {
     
     private String description;
     private String location;
-    private String address;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private String scope;

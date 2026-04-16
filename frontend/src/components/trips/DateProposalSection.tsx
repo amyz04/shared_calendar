@@ -1,294 +1,255 @@
-import { useState } from "react";
-import type { Trip, Friend } from "../../types";
+import { useState, useEffect } from "react";
+import type { Trip, TripDateProposal } from "../../types";
+import type { Friend } from "../../types";
+import {
+  getProposalsApi,
+  proposeDateApi,
+  voteOnProposalApi,
+  confirmProposalApi,
+} from "../../api/proposals";
 import { getUser } from "../../api/auth";
-import type { DateProposal, ConfirmedRange } from "./tripUtils";
-import { getDatesInRange, fmtDate } from "./tripUtils";
+import { MONTHS } from "../../data";
 
 interface DateProposalSectionProps {
   trip: Trip;
   members: Friend[];
-  onConfirm: (range: ConfirmedRange) => void;
+  onConfirmed: (startDate: string, endDate: string) => void;
 }
 
 export function DateProposalSection({
   trip,
   members,
-  onConfirm,
+  onConfirmed,
 }: DateProposalSectionProps) {
-  const [proposals, setProposals] = useState<DateProposal[]>([]);
-  const [showForm, setShowForm] = useState(false);
+  const [proposals, setProposals] = useState<TripDateProposal[]>([]);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const user = getUser();
-  const currentUserName = user ? `${user.firstName} ${user.lastName}` : "You";
-  const currentUserColor = user?.avatarColor ?? "#8b5cf6";
-  const currentUserInitials = user
-    ? `${user.firstName?.[0]}${user.lastName?.[0]}`
-    : "U";
+  const currentUser = getUser();
+  const confirmedProposal = proposals.find((p) => p.status === "CONFIRMED");
+  const isOwner = currentUser && trip.owner?.id === currentUser.id;
 
-  const is =
-    "w-full px-3 py-2 rounded-lg text-[13px] bg-slate-100 dark:bg-slate-700/60 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-slate-100 outline-none font-syne";
+  useEffect(() => {
+    fetchProposals();
+  }, [trip.id]);
 
-  function propose() {
+  async function fetchProposals() {
+    try {
+      const data = await getProposalsApi(trip.id);
+      setProposals(data);
+      const confirmed = data.find((p) => p.status === "CONFIRMED");
+      if (confirmed) onConfirmed(confirmed.startDate, confirmed.endDate);
+    } catch (err: any) {
+      console.error("Failed to fetch proposals:", err.message);
+    }
+  }
+
+  async function handlePropose() {
     if (!startDate || !endDate) return;
-    const p: DateProposal = {
-      id: crypto.randomUUID(),
-      proposedBy: currentUserName,
-      startDate,
-      endDate,
-      votes: [{ userId: currentUserName, vote: "agree" }],
-    };
-    setProposals((prev) => [...prev, p]);
-    setShowForm(false);
-    setStartDate("");
-    setEndDate("");
+    try {
+      setLoading(true);
+      setError(null);
+      const proposal = await proposeDateApi(trip.id, startDate, endDate);
+      setProposals((prev) => [...prev, proposal]);
+      setStartDate("");
+      setEndDate("");
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   }
 
-  function vote(proposalId: string, v: "agree" | "disagree") {
-    setProposals((prev) =>
-      prev.map((p) => {
-        if (p.id !== proposalId) return p;
-        const filtered = p.votes.filter((x) => x.userId !== currentUserName);
-        return {
-          ...p,
-          votes: [...filtered, { userId: currentUserName, vote: v }],
-        };
-      }),
-    );
+  async function handleVote(proposalId: string, vote: "AGREE" | "DISAGREE") {
+    try {
+      const updated = await voteOnProposalApi(proposalId, vote);
+      setProposals((prev) =>
+        prev.map((p) => (p.id === updated.id ? updated : p)),
+      );
+      if (updated.status === "CONFIRMED") {
+        onConfirmed(updated.startDate, updated.endDate);
+      }
+    } catch (err: any) {
+      setError(err.message);
+    }
   }
 
-  const myVote = (p: DateProposal) =>
-    p.votes.find((v) => v.userId === currentUserName)?.vote;
-  const agreeCount = (p: DateProposal) =>
-    p.votes.filter((v) => v.vote === "agree").length;
+  async function handleConfirm(proposalId: string) {
+    try {
+      const updated = await confirmProposalApi(proposalId);
+      setProposals((prev) =>
+        prev.map((p) => (p.id === updated.id ? updated : p)),
+      );
+      onConfirmed(updated.startDate, updated.endDate);
+    } catch (err: any) {
+      setError(err.message);
+    }
+  }
+
+  function formatDate(dateStr: string) {
+    const [y, m, d] = dateStr.split("-").map(Number);
+    return `${MONTHS[m - 1].slice(0, 3)} ${d}, ${y}`;
+  }
+
+  const confirmedMembers = members.length;
 
   return (
-    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden mb-5">
-      <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
-        <div>
-          <div className="text-sm font-bold text-slate-900 dark:text-slate-100 font-syne">
-            Date proposals
-          </div>
-          <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Any member can propose — everyone votes
-          </div>
+    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden">
+      <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-700">
+        <div className="text-sm font-bold text-slate-900 dark:text-slate-100 font-syne">
+          Date proposals
         </div>
-        <button
-          onClick={() => setShowForm((s) => !s)}
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-violet-500 hover:bg-violet-600 text-white text-xs font-semibold font-syne border-none cursor-pointer transition-all"
-        >
-          <svg
-            width={11}
-            height={11}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2.5}
-            strokeLinecap="round"
-          >
-            <path d="M12 5v14M5 12h14" />
-          </svg>
-          Propose dates
-        </button>
+        <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          {confirmedProposal
+            ? `Dates confirmed · ${formatDate(confirmedProposal.startDate)} → ${formatDate(confirmedProposal.endDate)}`
+            : "Propose dates and vote to confirm"}
+        </div>
       </div>
 
-      {showForm && (
-        <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/30">
-          <div className="grid grid-cols-2 gap-3 mb-3">
+      <div className="p-5">
+        {/* Confirmed banner */}
+        {confirmedProposal && (
+          <div className="px-4 py-3 rounded-xl bg-green-400/10 border border-green-400/30 mb-4 flex items-center gap-3">
+            <div className="w-2 h-2 rounded-full bg-green-400 shrink-0" />
             <div>
-              <div className="text-[11px] text-slate-500 dark:text-slate-400 mb-1.5 font-syne font-medium">
-                Start date
+              <div className="text-[13px] font-semibold text-green-500 font-syne">
+                Trip confirmed
               </div>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className={is}
-              />
-            </div>
-            <div>
-              <div className="text-[11px] text-slate-500 dark:text-slate-400 mb-1.5 font-syne font-medium">
-                End date
+              <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                {formatDate(confirmedProposal.startDate)} →{" "}
+                {formatDate(confirmedProposal.endDate)}
               </div>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className={is}
-              />
             </div>
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setShowForm(false)}
-              className="flex-1 py-2 rounded-lg bg-transparent border border-slate-200 dark:border-slate-600 text-slate-500 text-xs font-syne cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={propose}
-              disabled={!startDate || !endDate}
-              className={`flex-1 py-2 rounded-lg text-xs font-semibold font-syne border-none transition-all ${startDate && endDate ? "bg-violet-500 hover:bg-violet-600 text-white cursor-pointer" : "bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-default"}`}
-            >
-              Submit proposal
-            </button>
-          </div>
-        </div>
-      )}
+        )}
 
-      {proposals.length === 0 ? (
-        <div className="px-5 py-8 text-center">
-          <div className="text-[13px] text-slate-500 dark:text-slate-400 font-syne">
-            No proposals yet — be the first to suggest dates!
-          </div>
-        </div>
-      ) : (
-        <div className="divide-y divide-slate-100 dark:divide-slate-700/50">
-          {proposals.map((p) => {
-            const agreed = agreeCount(p);
-            const total = members.length;
-            const pct = Math.round((agreed / total) * 100);
-            const mv = myVote(p);
-            const allAgreed = agreed === total;
-            return (
-              <div key={p.id} className="px-5 py-4">
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <div className="text-[13px] font-semibold text-slate-900 dark:text-slate-100 font-syne">
-                      {fmtDate(p.startDate)} → {fmtDate(p.endDate)}
-                    </div>
-                    <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                      {getDatesInRange(p.startDate, p.endDate).length} days ·
-                      proposed by {p.proposedBy}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="text-xs font-semibold text-slate-900 dark:text-slate-100 font-syne">
-                      {agreed}/{total}
-                    </div>
-                    <div className="w-16 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                      <div
-                        style={{ width: `${pct}%` }}
-                        className={`h-full rounded-full transition-all ${allAgreed ? "bg-emerald-500" : pct >= 50 ? "bg-violet-500" : "bg-slate-400"}`}
-                      />
-                    </div>
-                  </div>
-                </div>
+        {/* Existing proposals */}
+        {proposals.length > 0 && (
+          <div className="mb-4 flex flex-col gap-2">
+            {proposals.map((p) => {
+              const userVote = p.votes.find(
+                (v) => v.user.id === currentUser?.id,
+              );
+              const isConfirmed = p.status === "CONFIRMED";
 
-                <div className="flex items-center gap-2">
-                  {/* Avatar votes — now using initials instead of Avatar component */}
-                  <div className="flex -space-x-1.5 flex-1">
-                    {p.votes.map((v) => (
-                      <div key={v.userId} className="relative">
-                        <div
-                          style={{
-                            width: 22,
-                            height: 22,
-                            borderRadius: "50%",
-                            background: `${currentUserColor}22`,
-                            border: `1.5px solid ${currentUserColor}55`,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            fontSize: 8,
-                            fontWeight: 700,
-                            color: currentUserColor,
-                          }}
-                        >
-                          {currentUserInitials}
-                        </div>
-                        <div
-                          className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border border-white dark:border-slate-800 flex items-center justify-center ${v.vote === "agree" ? "bg-emerald-500" : "bg-red-400"}`}
-                        >
-                          {v.vote === "agree" ? (
-                            <svg
-                              width={6}
-                              height={6}
-                              viewBox="0 0 10 10"
-                              fill="none"
-                              stroke="#fff"
-                              strokeWidth={2}
-                            >
-                              <path d="M2 5l2 2 4-4" />
-                            </svg>
-                          ) : (
-                            <svg
-                              width={6}
-                              height={6}
-                              viewBox="0 0 10 10"
-                              fill="none"
-                              stroke="#fff"
-                              strokeWidth={2}
-                            >
-                              <path d="M3 3l4 4M7 3l-4 4" />
-                            </svg>
-                          )}
-                        </div>
+              return (
+                <div
+                  key={p.id}
+                  style={{
+                    borderColor: isConfirmed ? "#4ade8040" : undefined,
+                    background: isConfirmed ? "#4ade8008" : undefined,
+                  }}
+                  className="px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <div className="text-[13px] font-semibold text-slate-900 dark:text-slate-100 font-syne">
+                        {formatDate(p.startDate)} → {formatDate(p.endDate)}
                       </div>
-                    ))}
+                      <div className="text-[11px] text-slate-400 dark:text-slate-600">
+                        Proposed by {p.proposedBy.firstName} · {p.agreeCount}/
+                        {confirmedMembers} agree
+                      </div>
+                    </div>
+                    {isConfirmed && (
+                      <span className="text-[11px] font-semibold text-green-500 font-syne px-2 py-1 rounded-full bg-green-400/10 border border-green-400/30">
+                        confirmed
+                      </span>
+                    )}
                   </div>
 
-                  {p.proposedBy !== currentUserName && !allAgreed && (
-                    <div className="flex gap-1.5">
+                  {/* Vote buttons — only show if not confirmed */}
+                  {!isConfirmed && (
+                    <div className="flex gap-2">
                       <button
-                        onClick={() => vote(p.id, "agree")}
-                        className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold font-syne border transition-all ${mv === "agree" ? "bg-emerald-500 text-white border-emerald-500" : "bg-transparent text-emerald-600 border-emerald-300 dark:border-emerald-700 hover:bg-emerald-500/10"}`}
+                        onClick={() => handleVote(p.id, "AGREE")}
+                        className={`flex-1 py-1.5 rounded-lg text-[12px] font-semibold font-syne border cursor-pointer transition-all ${
+                          userVote?.vote === "AGREE"
+                            ? "bg-green-400/20 border-green-400/50 text-green-500"
+                            : "bg-transparent border-slate-200 dark:border-slate-700 text-slate-500 hover:border-green-400/50 hover:text-green-500"
+                        }`}
                       >
-                        <svg
-                          width={11}
-                          height={11}
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth={2.5}
-                          strokeLinecap="round"
-                        >
-                          <path d="M20 6L9 17l-5-5" />
-                        </svg>
-                        Agree
+                        Agree {userVote?.vote === "AGREE" ? "✓" : ""}
                       </button>
                       <button
-                        onClick={() => vote(p.id, "disagree")}
-                        className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold font-syne border transition-all ${mv === "disagree" ? "bg-red-400 text-white border-red-400" : "bg-transparent text-red-400 border-red-200 dark:border-red-800 hover:bg-red-400/10"}`}
+                        onClick={() => handleVote(p.id, "DISAGREE")}
+                        className={`flex-1 py-1.5 rounded-lg text-[12px] font-semibold font-syne border cursor-pointer transition-all ${
+                          userVote?.vote === "DISAGREE"
+                            ? "bg-red-400/20 border-red-400/50 text-red-400"
+                            : "bg-transparent border-slate-200 dark:border-slate-700 text-slate-500 hover:border-red-400/50 hover:text-red-400"
+                        }`}
                       >
-                        <svg
-                          width={11}
-                          height={11}
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth={2.5}
-                          strokeLinecap="round"
-                        >
-                          <path d="M18 6L6 18M6 6l12 12" />
-                        </svg>
                         Disagree
                       </button>
-                    </div>
-                  )}
-
-                  {allAgreed && (
-                    <div className="flex items-center gap-2">
-                      <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 text-[11px] font-semibold font-syne border border-emerald-200 dark:border-emerald-800">
-                        ✓ All agreed!
-                      </span>
-                      <button
-                        onClick={() =>
-                          onConfirm({ start: p.startDate, end: p.endDate })
-                        }
-                        className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold font-syne border-none cursor-pointer transition-all"
-                      >
-                        Confirm dates →
-                      </button>
+                      {/* Owner can force confirm */}
+                      {isOwner && (
+                        <button
+                          onClick={() => handleConfirm(p.id)}
+                          className="px-3 py-1.5 rounded-lg text-[12px] font-semibold font-syne border border-violet-500/50 text-violet-500 bg-violet-500/10 cursor-pointer hover:bg-violet-500/20 transition-all"
+                        >
+                          Confirm
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* New proposal form — hide if dates already confirmed */}
+        {!confirmedProposal && (
+          <div>
+            <div className="text-[11px] font-semibold text-slate-400 dark:text-slate-600 tracking-widest font-syne mb-2">
+              PROPOSE DATES
+            </div>
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              <div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 mb-1 font-syne">
+                  Start
+                </div>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-[13px] text-slate-900 dark:text-slate-100 font-syne"
+                />
               </div>
-            );
-          })}
-        </div>
-      )}
+              <div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 mb-1 font-syne">
+                  End
+                </div>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  min={startDate}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-[13px] text-slate-900 dark:text-slate-100 font-syne"
+                />
+              </div>
+            </div>
+
+            {error && (
+              <p className="text-xs text-red-400 mb-2 font-syne">{error}</p>
+            )}
+
+            <button
+              onClick={handlePropose}
+              disabled={!startDate || !endDate || loading}
+              className={`w-full py-2.5 rounded-lg text-[13px] font-semibold font-syne border-none transition-all ${
+                startDate && endDate && !loading
+                  ? "bg-violet-500 hover:bg-violet-600 text-white cursor-pointer"
+                  : "bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-default"
+              }`}
+            >
+              {loading ? "Proposing..." : "Propose dates"}
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

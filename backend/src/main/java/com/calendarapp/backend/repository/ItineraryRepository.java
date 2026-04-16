@@ -6,9 +6,15 @@ import com.calendarapp.backend.entity.Trip;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface ItineraryRepository extends JpaRepository<Itinerary, String> {
-    Optional<Itinerary> findByTrip(Trip trip);
+    List<Itinerary> findByTrip(Trip trip);
+    List<Itinerary> findByTripOrderByDayNumberAsc(Trip trip);
+    Optional<Itinerary> findByTripAndDayNumber(Trip trip, int dayNumber);
+    Optional<Itinerary> findByTripAndDate(Trip trip, LocalDate date);
+    void deleteByTrip(Trip trip);
 }

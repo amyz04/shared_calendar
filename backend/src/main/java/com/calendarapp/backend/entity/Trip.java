@@ -40,8 +40,11 @@ public class Trip {
     @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TripMember> members = new ArrayList<>();
 
-    @OneToOne(mappedBy = "trip", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private Itinerary itinerary;
+    @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Itinerary> itineraries = new ArrayList<>();
+
+    @OneToMany(mappedBy = "trip", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<TripDateProposal> proposals = new ArrayList<>();
 
     @Column(name = "start_date", nullable = false)
     private LocalDate startDate;

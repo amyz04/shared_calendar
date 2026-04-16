@@ -30,8 +30,14 @@ function buildBusyMap(
   return out;
 }
 
-export function useAvailability(trip: Trip | null, members: Friend[], tripLen: number = 0) {
-  const [tripAvailability, setTripAvailability] = useState<Record<string, AvailabilityData>>({});
+export function useAvailability(
+  trip: Trip | null,
+  members: Friend[],
+  tripLen: number = 0,
+) {
+  const [tripAvailability, setTripAvailability] = useState<
+    Record<string, AvailabilityData>
+  >({});
   const [loading, setLoading] = useState(false);
   const { availabilityRefreshKey } = useCalendars();
 
@@ -44,15 +50,26 @@ export function useAvailability(trip: Trip | null, members: Friend[], tripLen: n
     let cancelled = false;
     setLoading(true);
     getTripAvailabilityApi(trip.id)
-      .then((data) => { if (!cancelled) setTripAvailability(data); })
+      .then((data) => {
+        if (!cancelled) setTripAvailability(data);
+      })
       .catch((err) => console.error("Failed to fetch trip availability:", err))
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [trip?.id, availabilityRefreshKey]);
 
   const syncedMemberIds = useMemo(
-    () => new Set(members.filter(f => tripAvailability[f.email] !== undefined).map(f => f.id)),
-    [tripAvailability, members]
+    () =>
+      new Set(
+        members
+          .filter((f) => tripAvailability[f.email] !== undefined)
+          .map((f) => f.id),
+      ),
+    [tripAvailability, members],
   );
 
   const allBusy = useMemo<BusyMap>(() => {
@@ -68,19 +85,23 @@ export function useAvailability(trip: Trip | null, members: Friend[], tripLen: n
     const out: { [d: number]: CellData } = {};
     for (let d = 1; d <= days; d++) {
       const mb = members.map((f) => ({ f, blocks: allBusy[f.id]?.[d] || [] }));
-      const syncedMembers = members.filter(f => syncedMemberIds.has(f.id));
-      const ab = mb.filter(x => syncedMemberIds.has(x.f.id)).flatMap((x) => x.blocks);
+      const syncedMembers = members.filter((f) => syncedMemberIds.has(f.id));
+      const ab = mb
+        .filter((x) => syncedMemberIds.has(x.f.id))
+        .flatMap((x) => x.blocks);
       out[d] = {
         memberBusy: mb,
         freeSlots: syncedMembers.length > 0 ? getFreeSlots(ab) : [],
-        fullyFree: syncedMembers.filter((f) => (allBusy[f.id]?.[d] || []).length === 0),
+        fullyFree: syncedMembers.filter(
+          (f) => (allBusy[f.id]?.[d] || []).length === 0,
+        ),
       };
     }
     return out;
   }, [allBusy, days, members, syncedMemberIds]);
 
   const windows = useMemo(() => {
-    const syncedMembers = members.filter(f => syncedMemberIds.has(f.id));
+    const syncedMembers = members.filter((f) => syncedMemberIds.has(f.id));
     return computeWindows(syncedMembers, allBusy, year, month, tripLen);
   }, [allBusy, trip?.id, syncedMemberIds, tripLen]);
 
@@ -91,5 +112,13 @@ export function useAvailability(trip: Trip | null, members: Friend[], tripLen: n
     ]),
   );
 
-  return { allBusy, cells, windows, busyEventCounts, days, loading, syncedMemberIds };
+  return {
+    allBusy,
+    cells,
+    windows,
+    busyEventCounts,
+    days,
+    loading,
+    syncedMemberIds,
+  };
 }

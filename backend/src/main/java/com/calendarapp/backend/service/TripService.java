@@ -1,22 +1,25 @@
 package com.calendarapp.backend.service;
 
 import com.calendarapp.backend.dto.request.CreateTripRequest;
+import com.calendarapp.backend.dto.response.EventResponse;
+import com.calendarapp.backend.dto.response.ItineraryResponse;
 import com.calendarapp.backend.dto.response.TripMemberResponse;
 import com.calendarapp.backend.dto.response.TripResponse;
 import com.calendarapp.backend.dto.response.UserResponse;
-import com.calendarapp.backend.entity.Itinerary;
+import com.calendarapp.backend.entity.Event;
 import com.calendarapp.backend.entity.Trip;
 import com.calendarapp.backend.entity.TripMember;
 import com.calendarapp.backend.entity.User;
-import com.calendarapp.backend.repository.TripRepository;
 import com.calendarapp.backend.repository.CalendarRepository;
+import com.calendarapp.backend.repository.ItineraryRepository;
 import com.calendarapp.backend.repository.TripMemberRepository;
+import com.calendarapp.backend.repository.TripRepository;
 import com.calendarapp.backend.repository.UserRepository;
-
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -29,7 +32,9 @@ public class TripService {
     private final UserRepository userRepository;
     private final TripMemberRepository tripMemberRepository;
     private final CalendarRepository calendarRepository;
+    private final ItineraryRepository itineraryRepository;
 
+    @Transactional
     public TripResponse createTrip(String userId, CreateTripRequest request) {
         User owner = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -43,23 +48,18 @@ public class TripService {
         trip.setDetails(request.getDetails());
         trip.setOwner(owner);
         trip.setInviteToken(generateInviteToken());
-        trip.setStatus(Trip.Status.CONFIRMED); // auto-confirm since owner is only member
-        
-        Trip savedTrip = tripRepository.save(trip);
+        trip.setStatus(Trip.Status.CONFIRMED);
 
-        Itinerary itinerary = new Itinerary();
-        itinerary.setTrip(savedTrip);
-        trip.setItinerary(itinerary);
-
+        // add owner as confirmed member
         TripMember ownerMember = new TripMember();
-        ownerMember.setTrip(savedTrip);
+        ownerMember.setTrip(trip);
         ownerMember.setUser(owner);
         ownerMember.setStatus(TripMember.Status.CONFIRMED);
         trip.getMembers().add(ownerMember);
 
-        tripRepository.save(savedTrip);
-        return mapToResponse(savedTrip, userId);
-        }
+        tripRepository.save(trip);
+        return mapToResponse(trip, userId);
+    }
 
     @Transactional
     public List<TripResponse> getTrips(String userId) {
@@ -94,7 +94,7 @@ public class TripService {
                 .orElseThrow(() -> new RuntimeException("Trip not found"));
 
         if (!trip.getOwner().getId().equals(userId)) {
-            throw new RuntimeException("Not authorized");
+            throw new RuntimeException("Only the trip owner can update this trip");
         }
 
         if (request.getName() != null) trip.setName(request.getName());
@@ -114,7 +114,7 @@ public class TripService {
                 .orElseThrow(() -> new RuntimeException("Trip not found"));
 
         if (!trip.getOwner().getId().equals(userId)) {
-            throw new RuntimeException("Not authorized");
+            throw new RuntimeException("Only the trip owner can delete this trip");
         }
 
         tripRepository.delete(trip);
@@ -146,7 +146,7 @@ public class TripService {
         trip.setStatus(Trip.Status.PROPOSED);
         tripRepository.save(trip);
 
-        // reload trip to get updated members list
+
         Trip reloadedTrip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new RuntimeException("Trip not found"));
 
@@ -193,7 +193,7 @@ public class TripService {
     }
 
     @Transactional
-        public TripResponse respondToTrip(String userId, String tripId, String status) {
+    public TripResponse respondToTrip(String userId, String tripId, String status) {
         Trip trip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new RuntimeException("Trip not found"));
 
@@ -205,8 +205,9 @@ public class TripService {
 
         member.setStatus(TripMember.Status.valueOf(status.toUpperCase()));
         tripMemberRepository.save(member);
+        member.setStatus(TripMember.Status.valueOf(status.toUpperCase()));
+        tripMemberRepository.save(member);
 
-        // check if all non-owner members have responded
         List<TripMember> nonOwnerMembers = trip.getMembers().stream()
                 .filter(m -> !m.getUser().getId().equals(trip.getOwner().getId()))
                 .toList();
@@ -215,83 +216,98 @@ public class TripService {
                 .allMatch(m -> m.getStatus() == TripMember.Status.CONFIRMED
                         || m.getStatus() == TripMember.Status.REJECTED);
 
-        if (allResponded && !nonOwnerMembers.isEmpty()) {
-                trip.setStatus(Trip.Status.CONFIRMED);
-                tripRepository.save(trip);
+        // if (allResponded && !nonOwnerMembers.isEmpty()) {
+        //     trip.setStatus(Trip.Status.CONFIRMED);
+        //     tripRepository.save(trip);
+        // }
+
+        if (allResponded) {
+            trip.setStatus(Trip.Status.CONFIRMED);
+            tripRepository.save(trip);
         }
 
         Trip reloadedTrip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new RuntimeException("Trip not found"));
-
+        
         return mapToResponse(reloadedTrip, userId);
-        }
+    }
+
+    // ── helpers ───────────────────────────────────────────────────────────────
 
     private String generateInviteToken() {
         return UUID.randomUUID().toString().replace("-", "").substring(0, 12);
     }
 
-    private TripResponse mapToResponse(Trip trip, String currentUserId) {
-    UserResponse owner = new UserResponse(
-            trip.getOwner().getId(),
-            trip.getOwner().getFirstName(),
-            trip.getOwner().getLastName(),
-            trip.getOwner().getEmail(),
-            trip.getOwner().getAvatarColor(),
-            trip.getOwner().getDateOfBirth(),
-            trip.getOwner().getCreatedAt()
-    );
-
-    List<TripMemberResponse> members = trip.getMembers().stream()
-        .filter(m -> m != null && m.getUser() != null)
-        .map(m -> new TripMemberResponse(
-                m.getId(),
-                m.getUser().getId(),
-                m.getUser().getFirstName(),
-                m.getUser().getLastName(),
-                m.getUser().getEmail(),
-                m.getUser().getAvatarColor(),
-                m.getStatus().name(),
-                m.getJoinedAt(),
-                calendarRepository.existsByUser(m.getUser())
-        ))
-        .collect(Collectors.toList());
-
-    boolean isOwner = trip.getOwner().getId().equals(currentUserId);
-
-    long acceptedCount = trip.getMembers().stream()
-            .filter(m -> m != null && m.getUser() != null
-                    && m.getStatus() == TripMember.Status.CONFIRMED
-                    && !m.getUser().getId().equals(trip.getOwner().getId()))
-            .count();
-
-    long declinedCount = trip.getMembers().stream()
-            .filter(m -> m != null && m.getUser() != null
-                    && m.getStatus() == TripMember.Status.REJECTED)
-            .count();
-
-    String currentUserStatus = trip.getMembers().stream()
-            .filter(m -> m != null && m.getUser() != null
-                    && m.getUser().getId().equals(currentUserId))
-            .map(m -> m.getStatus().name())
-            .findFirst()
-            .orElse("PENDING");
-
-    return new TripResponse(
-            trip.getId(),
-            trip.getName(),
-            trip.getDestination(),
-            trip.getCover(),
-            trip.getInviteToken(),
-            owner,
-            members,
-            trip.getStartDate(),
-            trip.getEndDate(),
-            trip.getStatus().name(),
-            trip.getCreatedAt(),
-            isOwner,
-            acceptedCount,
-            declinedCount,
-            currentUserStatus
+    public UserResponse mapToUserResponse(User user) {
+        return new UserResponse(
+                user.getId(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getEmail(),
+                user.getAvatarColor(),
+                user.getDateOfBirth(),
+                user.getCreatedAt()
         );
-        }
+    }
+
+    private EventResponse mappingEventHelper(Event event, String itineraryId){
+        return new EventResponse(event.getId(), itineraryId, event.getCreatedBy().getId(), event.getName(), event.getDescription(), event.getLocation(), event.getStartTime(), event.getEndTime(), event.getScope().name(), event.getStatus().name(), event.getCreatedAt());
+    }
+
+    private TripResponse mapToResponse(Trip trip, String currentUserId) {
+        UserResponse owner = mapToUserResponse(trip.getOwner());
+
+        List<TripMemberResponse> members = trip.getMembers().stream()
+                .filter(m -> m != null && m.getUser() != null)
+                .map(m -> new TripMemberResponse(
+                        m.getId(),
+                        m.getUser().getId(),
+                        m.getUser().getFirstName(),
+                        m.getUser().getLastName(),
+                        m.getUser().getEmail(),
+                        m.getUser().getAvatarColor(),
+                        m.getStatus().name(),
+                        m.getJoinedAt(),
+                        calendarRepository.existsByUser(m.getUser())
+                ))
+                .collect(Collectors.toList());
+
+        boolean isOwner = trip.getOwner().getId().equals(currentUserId);
+
+        long acceptedCount = trip.getMembers().stream()
+                .filter(m -> m != null && m.getUser() != null
+                        && m.getStatus() == TripMember.Status.CONFIRMED
+                        && !m.getUser().getId().equals(trip.getOwner().getId()))
+                .count();
+
+        long declinedCount = trip.getMembers().stream()
+                .filter(m -> m != null && m.getUser() != null
+                        && m.getStatus() == TripMember.Status.REJECTED)
+                .count();
+
+        String currentUserStatus = trip.getMembers().stream()
+                .filter(m -> m != null && m.getUser() != null
+                        && m.getUser().getId().equals(currentUserId))
+                .map(m -> m.getStatus().name())
+                .findFirst()
+                .orElse("PENDING");
+
+        return new TripResponse(
+                trip.getId(),
+                trip.getName(),
+                trip.getDestination(),
+                trip.getCover(),
+                trip.getInviteToken(),
+                owner,
+                members,
+                trip.getStartDate(),
+                trip.getEndDate(),
+                trip.getStatus().name(),
+                trip.getCreatedAt(),
+                isOwner,
+                acceptedCount,
+                declinedCount,
+                currentUserStatus
+        );
+    }
 }
