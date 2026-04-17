@@ -50,13 +50,10 @@ export async function voteOnProposalApi(
   return res.json();
 }
 
-export async function confirmProposalApi(
-  proposalId: string,
-): Promise<TripDateProposal> {
-  const res = await fetch(`${BASE_URL}/trips/proposals/${proposalId}/confirm`, {
-    method: "POST",
+export async function resetProposalsApi(tripId: string): Promise<void> {
+  const res = await fetch(`${BASE_URL}/trips/${tripId}/proposals`, {
+    method: "DELETE",
     headers: authHeaders(),
   });
-  if (!res.ok) throw new Error("Failed to confirm proposal");
-  return res.json();
+  if (!res.ok) throw new Error("Failed to reset proposals");
 }

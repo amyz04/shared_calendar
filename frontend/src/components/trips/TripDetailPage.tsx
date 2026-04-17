@@ -36,9 +36,7 @@ export function TripDetailPage({
   const [activeTab, setActiveTab] = useState<"availability" | "itinerary">(
     "availability",
   );
-  const [confirmedRange, setConfirmedRange] = useState<ConfirmedRange | null>(
-    null,
-  );
+  const [confirmedRange, setConfirmedRange] = useState<ConfirmedRange | null>(null);
   const [selDay, setSelDay] = useState<number | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [tripLen, setTripLen] = useState(3);
@@ -53,16 +51,7 @@ export function TripDetailPage({
     useAvailability(trip!, members, tripLen);
 
   const isOwner = currentUser?.id === trip?.owner?.id;
-
-  const [confirmedStartDate, setConfirmedStartDate] = useState<string | null>(
-    trip.startDate ?? null,
-  );
-  const [confirmedEndDate, setConfirmedEndDate] = useState<string | null>(
-    trip.endDate ?? null,
-  );
-
-  // check if dates are confirmed on load
-  const datesConfirmed = !!confirmedStartDate && !!confirmedEndDate;
+  const datesConfirmed = !!confirmedRange;
 
   async function confirmDeleteTrip() {
     try {
@@ -222,7 +211,7 @@ export function TripDetailPage({
             }}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-semibold font-syne border-none transition-all ${
               activeTab === tab.id
-                ? "bg-white dark:bg-slate-700 text-violet-500 shadow-sm"
+                ? "bg-white dark:bg-slate-700 text-violet-500 shadow-sm cursor-pointer"
                 : tab.id === "itinerary" && !datesConfirmed
                   ? "bg-transparent text-slate-300 dark:text-slate-600 cursor-not-allowed"
                   : "bg-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
@@ -245,6 +234,7 @@ export function TripDetailPage({
         ))}
       </div>
 
+      {/* Availability tab content */}
       {activeTab === "availability" && (
         <div>
           <div className="flex gap-2 mb-5">
@@ -309,8 +299,9 @@ export function TripDetailPage({
                               className="w-1 h-1 rounded-full"
                             />
                           ))}
-                        {data.fullyFree.filter((f) => syncedMemberIds.has(f.id))
-                          .length > 3 && (
+                        {data.fullyFree.filter((f) =>
+                          syncedMemberIds.has(f.id),
+                        ).length > 3 && (
                           <div
                             style={{
                               background: isSel
@@ -508,6 +499,7 @@ export function TripDetailPage({
           <BestWindowsPanel
             windows={windows}
             month={month}
+            year={year}
             onSetupCalendar={
               !calendarsSynced && !isGuest ? onOpenProfile : undefined
             }
@@ -515,27 +507,36 @@ export function TripDetailPage({
             tripLen={tripLen}
             onTripLenChange={setTripLen}
           />
-
-          {calendarsSynced && (
-            <div className="mt-6">
-              <DateProposalSection
-                trip={trip}
-                members={members}
-                onConfirmed={(start, end) => {
-                  setConfirmedStartDate(start);
-                  setConfirmedEndDate(end);
-                }}
-              />
-            </div>
-          )}
         </div>
       )}
 
+      {/* DateProposalSection — always mounted outside tab conditional
+          so useEffect doesn't re-trigger on every tab switch */}
+      {calendarsSynced && (
+        <div className={`mt-6 ${activeTab === "itinerary" ? "hidden" : ""}`}>
+          <DateProposalSection
+            trip={trip}
+            members={members}
+            onConfirmed={(start, end) => {
+              setConfirmedRange({ start, end });
+              setActiveTab((prev) =>
+                prev === "availability" ? "itinerary" : prev,
+              );
+            }}
+            onReset={() => {
+              setConfirmedRange(null);
+              setActiveTab("availability");
+            }}
+          />
+        </div>
+      )}
+
+      {/* Itinerary tab content */}
       {activeTab === "itinerary" && (
         <ItineraryTab
           trip={trip}
-          confirmedStartDate={confirmedStartDate}
-          confirmedEndDate={confirmedEndDate}
+          confirmedStartDate={confirmedRange?.start ?? null}
+          confirmedEndDate={confirmedRange?.end ?? null}
         />
       )}
     </div>

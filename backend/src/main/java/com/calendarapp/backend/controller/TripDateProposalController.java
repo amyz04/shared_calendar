@@ -53,12 +53,11 @@ public class TripDateProposalController {
         );
     }
 
-    @PostMapping("/proposals/{proposalId}/confirm")
-    public ResponseEntity<TripDateProposalResponse> confirm(
-            @PathVariable String proposalId,
+    @DeleteMapping("/{tripId}/proposals")
+    public ResponseEntity<String> resetProposals(
+            @PathVariable String tripId,
             Principal principal) {
-        return ResponseEntity.ok(
-            proposalService.confirmProposal(getUserId(principal), proposalId)
-        );
+        proposalService.resetProposals(getUserId(principal), tripId);
+        return ResponseEntity.ok("Proposals reset");
     }
 }

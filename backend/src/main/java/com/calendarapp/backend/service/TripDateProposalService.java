@@ -43,7 +43,6 @@ public class TripDateProposalService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // only trip members can propose dates
         boolean isMember = trip.getMembers().stream()
                 .anyMatch(m -> m.getUser().getId().equals(userId));
         if (!isMember && !trip.getOwner().getId().equals(userId)) {
@@ -78,7 +77,6 @@ public class TripDateProposalService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // update existing vote or create new one
         TripDateVote vote = voteRepository
                 .findByProposalAndUser(proposal, user)
                 .orElse(new TripDateVote());
@@ -88,7 +86,6 @@ public class TripDateProposalService {
         vote.setVote(TripDateVote.Vote.valueOf(request.getVote().toUpperCase()));
         voteRepository.save(vote);
 
-        // check if all confirmed members have agreed
         Trip trip = proposal.getTrip();
         List<TripMember> confirmedMembers = trip.getMembers().stream()
                 .filter(m -> m.getStatus() == TripMember.Status.CONFIRMED)
@@ -99,17 +96,14 @@ public class TripDateProposalService {
                 .filter(v -> v.getVote() == TripDateVote.Vote.AGREE)
                 .count();
 
-        // if everyone agrees, confirm the proposal and update trip dates
         if (agreeCount == confirmedMembers.size()) {
             proposal.setStatus(TripDateProposal.Status.CONFIRMED);
             proposalRepository.save(proposal);
 
-            // update trip start and end dates
             trip.setStartDate(proposal.getStartDate());
             trip.setEndDate(proposal.getEndDate());
             tripRepository.save(trip);
 
-            // generate itineraries for each day of the trip
             generateItineraries(trip, proposal.getStartDate(), proposal.getEndDate());
         }
 
@@ -117,31 +111,25 @@ public class TripDateProposalService {
     }
 
     @Transactional
-    public TripDateProposalResponse confirmProposal(String userId, String proposalId) {
-        TripDateProposal proposal = proposalRepository.findById(proposalId)
-                .orElseThrow(() -> new RuntimeException("Proposal not found"));
+    public void resetProposals(String userId, String tripId) {
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new RuntimeException("Trip not found"));
 
-        Trip trip = proposal.getTrip();
-
-        if (!trip.getOwner().getId().equals(userId)) {
-            throw new RuntimeException("Only the trip owner can confirm a proposal");
+        // delete all votes for all proposals of this trip
+        List<TripDateProposal> proposals = proposalRepository.findByTrip(trip);
+        for (TripDateProposal proposal : proposals) {
+            voteRepository.deleteAll(voteRepository.findByProposal(proposal));
         }
 
-        proposal.setStatus(TripDateProposal.Status.CONFIRMED);
-        proposalRepository.save(proposal);
+        // delete all proposals
+        proposalRepository.deleteAll(proposals);
 
-        trip.setStartDate(proposal.getStartDate());
-        trip.setEndDate(proposal.getEndDate());
-        tripRepository.save(trip);
-
-        generateItineraries(trip, proposal.getStartDate(), proposal.getEndDate());
-
-        return mapToResponse(proposal);
+        // delete all itineraries (and their events via cascade)
+        List<Itinerary> itineraries = itineraryRepository.findByTrip(trip);
+        itineraryRepository.deleteAll(itineraries);
     }
 
-    // generates one itinerary per day between start and end date
     private void generateItineraries(Trip trip, LocalDate startDate, LocalDate endDate) {
-        // delete existing itineraries first
         List<Itinerary> existing = itineraryRepository.findByTrip(trip);
         itineraryRepository.deleteAll(existing);
 

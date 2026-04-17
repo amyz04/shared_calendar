@@ -261,6 +261,7 @@ export function CalendarPage({
       <BestWindowsPanel
         windows={windows}
         month={month}
+        year={year}  
         tripLen={tripLen}
         onTripLenChange={setTripLen}
       />
