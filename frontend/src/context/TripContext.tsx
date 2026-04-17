@@ -21,11 +21,11 @@ interface TripContextType {
 const TripContext = createContext<TripContextType | null>(null);
 
 function normalizeTrip(raw: any): Trip {
-  const start = new Date(raw.startDate);
+  const [year, month] = (raw.startDate as string).split("-").map(Number);
   return {
     ...raw,
-    year: start.getFullYear(),
-    month: start.getMonth(),
+    year,
+    month: month - 1, // convert 1-based to 0-based
     dest: raw.destination,
     memberIds: (raw.members ?? []).map((_: any, i: number) => i + 1),
     isOwner: raw.isOwner === true,

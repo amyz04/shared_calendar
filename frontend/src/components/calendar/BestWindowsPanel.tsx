@@ -16,6 +16,7 @@ interface Window {
 interface BestWindowsPanelProps {
   windows: Window[];
   month: number;
+  year?: number;
   onSetupCalendar?: () => void;
   isEmpty?: boolean;
   tripLen: number;
@@ -25,32 +26,46 @@ interface BestWindowsPanelProps {
 export function BestWindowsPanel({
   windows,
   month,
+  year = new Date().getFullYear(),
   onSetupCalendar,
   isEmpty,
   tripLen,
   onTripLenChange,
 }: BestWindowsPanelProps) {
+  const maxDays = new Date(year, month + 1, 0).getDate();
   const [inputVal, setInputVal] = useState(String(tripLen));
 
-  // Keep local input in sync if parent changes tripLen externally
   useEffect(() => {
     setInputVal(String(tripLen));
   }, [tripLen]);
 
+  useEffect(() => {
+    if (tripLen > maxDays) {
+      onTripLenChange(maxDays);
+    }
+  }, [maxDays]);
+
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const raw = e.target.value;
-    setInputVal(raw); // always allow editing freely
+
+    if (raw === "" || raw === "-") {
+      setInputVal(raw);
+      return;
+    }
+
     const num = parseInt(raw);
-    if (!isNaN(num) && num >= 1 && num <= 30) {
-      onTripLenChange(num);
+    if (!isNaN(num)) {
+      const clamped = Math.min(Math.max(num, 1), maxDays);
+      setInputVal(String(clamped));
+      onTripLenChange(clamped);
     }
   }
 
   function handleBlur() {
-    // On blur, if empty or invalid, reset to last valid tripLen
     const num = parseInt(inputVal);
-    if (isNaN(num) || num < 1 || num > 30) {
-      setInputVal(String(tripLen));
+    if (isNaN(num) || num < 1) {
+      setInputVal("1");
+      onTripLenChange(1);
     }
   }
 
@@ -77,14 +92,14 @@ export function BestWindowsPanel({
               <input
                 type="number"
                 min={1}
-                max={30}
+                max={maxDays}
                 value={inputVal}
                 onChange={handleChange}
                 onBlur={handleBlur}
                 className="w-14 px-2 py-1.5 rounded-lg text-[12px] font-semibold font-syne text-center border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-slate-100 outline-none focus:border-violet-500 transition-colors"
               />
               <span className="text-[11px] text-slate-400 dark:text-slate-500 font-syne">
-                day{tripLen !== 1 ? "s" : ""}
+                day{tripLen !== 1 ? "s" : ""} (max {maxDays})
               </span>
             </div>
           </div>
@@ -103,7 +118,8 @@ export function BestWindowsPanel({
             ))}
           </div>
           <p className="text-[13px] text-slate-500 dark:text-slate-400 leading-relaxed max-w-xs">
-            We'll automatically find the best dates once your group connects their calendars.
+            We'll automatically find the best dates once your group connects
+            their calendars.
           </p>
           {onSetupCalendar && (
             <button
@@ -120,13 +136,19 @@ export function BestWindowsPanel({
             No windows found
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            No {tripLen}-day stretch where enough members are free. Try a different length.
+            No {tripLen}-day stretch where enough members are free. Try a
+            different length.
           </p>
         </div>
       ) : (
         <div className="grid grid-cols-3">
           {windows.map((w, i) => {
-            const col = w.score >= 90 ? "#2dd4bf" : w.score >= 70 ? "#8b5cf6" : "#f59e0b";
+            const col =
+              w.score >= 90
+                ? "#2dd4bf"
+                : w.score >= 70
+                  ? "#8b5cf6"
+                  : "#f59e0b";
             const isTop = i === 0;
             return (
               <div
@@ -151,24 +173,41 @@ export function BestWindowsPanel({
                       {MONTHS[month].slice(0, 3)} {w.start}–{w.end}
                     </div>
                     <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                      {w.len} day{w.len !== 1 ? "s" : ""} · {w.count}/{w.total} free
+                      {w.len} day{w.len !== 1 ? "s" : ""} · {w.count}/
+                      {w.total} free
                     </div>
                   </div>
                   <div
-                    style={{ backgroundColor: `${col}20`, borderColor: col, color: col }}
+                    style={{
+                      backgroundColor: `${col}20`,
+                      borderColor: col,
+                      color: col,
+                    }}
                     className="w-8 h-8 rounded-full border-2 flex items-center justify-center text-[11px] font-bold font-syne shrink-0"
                   >
                     {w.score}
                   </div>
                 </div>
-                <div className={`flex flex-wrap gap-1 ${w.conflicts.length > 0 ? "mb-2" : ""}`}>
+                <div
+                  className={`flex flex-wrap gap-1 ${w.conflicts.length > 0 ? "mb-2" : ""}`}
+                >
                   {w.freeNames.map((n: string) => (
-                    <Pill key={n} color="#8b5cf6">{n}</Pill>
+                    <Pill key={n} color="#8b5cf6">
+                      {n}
+                    </Pill>
                   ))}
                 </div>
                 {w.conflicts.length > 0 && (
                   <div className="text-[11px] text-red-400 flex items-center gap-1">
-                    <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
+                    <svg
+                      width={10}
+                      height={10}
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      strokeLinecap="round"
+                    >
                       <circle cx={12} cy={12} r={10} />
                       <path d="M12 8v4M12 16h.01" />
                     </svg>

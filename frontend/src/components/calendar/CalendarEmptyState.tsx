@@ -100,6 +100,7 @@ export function CalendarEmptyState({
       <BestWindowsPanel
         windows={[]}
         month={month}
+        year={year}
         onSetupCalendar={!isGuest ? onOpenProfile : undefined}
         isEmpty
         tripLen={3}

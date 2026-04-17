@@ -23,8 +23,8 @@ export function NewTripModal({ onClose, onCreate }: NewTripModalProps) {
   const [name, setName] = useState("");
   const [destination, setDestination] = useState("");
   const [cover, setCover] = useState("✈️");
-  const [month, setMonth] = useState(4);
-  const [year, setYear] = useState(2026);
+  const [month, setMonth] = useState(new Date().getMonth());
+  const [year, setYear] = useState(new Date().getFullYear());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [details, setDetails] = useState<string>("");
@@ -67,10 +67,11 @@ export function NewTripModal({ onClose, onCreate }: NewTripModalProps) {
   }
 
   function buildDates() {
-    const start = new Date(year, month, 1);
-    const end = new Date(year, month + 1, 0);
-    const fmt = (d: Date) => d.toISOString().split("T")[0];
-    return { startDate: fmt(start), endDate: fmt(end) };
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const startDate = `${year}-${pad(month + 1)}-01`;
+    const lastDay = new Date(year, month + 1, 0).getDate();
+    const endDate = `${year}-${pad(month + 1)}-${pad(lastDay)}`;
+    return { startDate, endDate };
   }
 
   async function handleSubmit() {
