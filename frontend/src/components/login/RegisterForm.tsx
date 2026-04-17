@@ -18,13 +18,15 @@ export function RegisterForm({ onSubmit, loading, error }: RegisterFormProps) {
   const [password, setPassword] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState("");
 
+  const lettersOnly = (val: string) => val.replace(/[^a-zA-Z]/g, "");
+
   return (
     <div className="flex flex-col gap-3">
       <div className="grid grid-cols-2 gap-2.5">
         <FormField label="First name">
           <input
             value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
+            onChange={(e) => setFirstName(lettersOnly(e.target.value))}
             placeholder="First Name"
             className={inputCls}
           />
@@ -32,7 +34,7 @@ export function RegisterForm({ onSubmit, loading, error }: RegisterFormProps) {
         <FormField label="Last name">
           <input
             value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
+            onChange={(e) => setLastName(lettersOnly(e.target.value))}
             placeholder="Last Name"
             className={inputCls}
           />
