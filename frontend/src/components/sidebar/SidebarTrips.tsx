@@ -19,6 +19,16 @@ export function SidebarTrips({
 }: SidebarTripsProps) {
   const navigate = useNavigate();
 
+  // Only show trips the user is actually part of — same logic as confirmedTrips in TripsPage
+  const visibleTrips = trips.filter((t) => {
+    if (t.currentUserStatus === "REJECTED") return false;
+    return (
+      t.status === "CONFIRMED" ||
+      (t.status === "PROPOSED" && t.isOwner) ||
+      (t.status === "PROPOSED" && !t.isOwner && t.currentUserStatus === "CONFIRMED")
+    );
+  });
+
   return (
     <div className="flex-1 overflow-y-auto px-2.5 py-1.5">
       <div className="flex items-center justify-between px-2 mb-1.5">
@@ -43,14 +53,14 @@ export function SidebarTrips({
         </div>
       ) : (
         <>
-          {trips.length === 0 && (
+          {visibleTrips.length === 0 && (
             <div className="px-2 py-4 text-center rounded-lg border border-dashed border-slate-200 dark:border-slate-700 mb-1">
               <span className="text-[11px] text-slate-400 dark:text-slate-600 font-syne leading-relaxed">
                 No trips yet
               </span>
             </div>
           )}
-          {trips.map((t) => {
+          {visibleTrips.map((t) => {
             const on = activeTripId === t.id;
             return (
               <button

@@ -23,11 +23,13 @@ export function TripsPage({
   const { refetch } = useTrips();
   const [activeTab, setActiveTab] = useState<"mytrips" | "pending">("mytrips");
 
+
   const confirmedTrips = trips.filter((t) => {
     if (t.currentUserStatus === "REJECTED") return false;
     return (
-      (t.status === "CONFIRMED" && t.currentUserStatus != "REJECTED") ||
-      (t.status === "PROPOSED" && t.isOwner)
+      t.status === "CONFIRMED" ||
+      (t.status === "PROPOSED" && t.isOwner) ||
+      (t.status === "PROPOSED" && !t.isOwner && t.currentUserStatus === "CONFIRMED")
     );
   });
 

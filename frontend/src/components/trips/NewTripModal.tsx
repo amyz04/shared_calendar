@@ -195,7 +195,7 @@ export function NewTripModal({ onClose, onCreate }: NewTripModalProps) {
               onChange={(e) => setYear(+e.target.value)}
               className={inputCls}
             >
-              {[2025, 2026, 2027].map((y) => (
+              {Array.from({ length: 3 }, (_, i) => new Date().getFullYear() + i).map((y) => (
                 <option key={y} value={y}>
                   {y}
                 </option>
