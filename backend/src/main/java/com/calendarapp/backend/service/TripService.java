@@ -251,7 +251,22 @@ public class TripService {
     }
 
     private EventResponse mappingEventHelper(Event event, String itineraryId){
-        return new EventResponse(event.getId(), itineraryId, event.getCreatedBy().getId(), event.getName(), event.getDescription(), event.getLocation(), event.getStartTime(), event.getEndTime(), event.getScope().name(), event.getStatus().name(), event.getCreatedAt());
+
+        UserResponse createdBy = null;
+        if (event.getCreatedBy() != null) {
+                User u = event.getCreatedBy();
+                createdBy = new UserResponse(
+                        u.getId(),
+                        u.getFirstName(),
+                        u.getLastName(),
+                        u.getEmail(),
+                        u.getAvatarColor(),
+                        u.getDateOfBirth(),
+                        u.getCreatedAt()
+                );
+        }
+        
+        return new EventResponse(event.getId(), itineraryId, createdBy, event.getName(), event.getDescription(), event.getLocation(), event.getStartTime(), event.getEndTime(), event.getScope().name(), event.getStatus().name(), event.getCreatedAt());
     }
 
     private TripResponse mapToResponse(Trip trip, String currentUserId) {

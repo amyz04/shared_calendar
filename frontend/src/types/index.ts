@@ -144,6 +144,6 @@ export interface TripEvent {
   endTime?: string;
   scope: "PERSONAL" | "GROUP";
   status: "PROPOSED" | "CONFIRMED" | "CANCELLED";
-  createdBy: string;
+  createdBy: User;
   createdAt: string;
 }
