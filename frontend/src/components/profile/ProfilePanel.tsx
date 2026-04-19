@@ -1,15 +1,16 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import type { CalendarSource } from "../../types";
 import { Pill } from "../ui";
 import { ProfileAvatar } from "./ProfileAvatar";
 import { ProfileTabs, type ProfileTab } from "./ProfileTabs";
 import { inputCls } from "../ui/inputStyle";
 import { getUser, saveUser } from "../../api/auth";
-import { importCalendarApi, deleteCalendarApi } from "../../api/calendar";
+import { importCalendarApi } from "../../api/calendar";
 import { useTrips } from "../../context/TripContext";
 import { MONTHS } from "../../data";
 import { useCalendars } from "../../context/CalendarContext";
 import { updateProfileApi } from "../../api/user";
+import { getFriendships } from "../../api/friends";
 
 interface ProfilePanelProps {
   onClose: () => void;
@@ -34,6 +35,7 @@ export function ProfilePanel({
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [friendCount, setFriendCount] = useState(0);
 
   const { trips } = useTrips();
   const savedUser = getUser();
@@ -44,6 +46,15 @@ export function ProfilePanel({
   const [avatarColor, setAvatarColor] = useState(savedUser?.avatarColor ?? "#8b5cf6");
   const [dob, setDob] = useState(savedUser?.dateOfBirth ?? "");
   const { removeCalendar } = useCalendars();
+
+  useEffect(() => {
+    getFriendships()
+      .then((data) => {
+        const accepted = data.filter((f: any) => f.status === "ACCEPTED").length;
+        setFriendCount(accepted);
+      })
+      .catch(() => {});
+  }, []);
 
   async function handleColorChange(color: string) {
     setAvatarColor(color);
@@ -125,7 +136,7 @@ export function ProfilePanel({
               <div className="grid grid-cols-3 gap-2.5 mb-5">
                 {[
                   [trips.length, "Trips", "#8b5cf6"],
-                  [0, "Friends", "#2dd4bf"],
+                  [friendCount, "Friends", "#2dd4bf"],
                   [calendars.length, "Calendars", "#4ade80"],
                 ].map(([v, l, c]) => (
                   <div
