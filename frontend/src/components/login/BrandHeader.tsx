@@ -15,7 +15,7 @@ export function BrandHeader() {
         </svg>
       </div>
       <span className="text-2xl font-bold text-slate-900 dark:text-slate-100 font-syne tracking-tight">
-        voyage
+        GYST
       </span>
     </div>
   );
