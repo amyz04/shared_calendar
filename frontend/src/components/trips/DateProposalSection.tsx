@@ -41,15 +41,21 @@ export function DateProposalSection({
   }, [trip.id]);
 
   async function fetchProposals() {
-    try {
-      const data = await getProposalsApi(trip.id);
-      setProposals(data);
-      const confirmed = data.find((p) => p.status === "CONFIRMED");
-      if (confirmed) onConfirmed(confirmed.startDate, confirmed.endDate);
-    } catch (err: any) {
-      console.error("Failed to fetch proposals:", err.message);
-    }
+  try {
+    const data = await getProposalsApi(trip.id);
+    setProposals((prev) => {
+      // only call onConfirmed if it wasn't confirmed before but is now
+      const wasConfirmed = prev.some((p) => p.status === "CONFIRMED");
+      const nowConfirmed = data.find((p) => p.status === "CONFIRMED");
+      if (!wasConfirmed && nowConfirmed) {
+        onConfirmed(nowConfirmed.startDate, nowConfirmed.endDate);
+      }
+      return data;
+    });
+  } catch (err: any) {
+    console.error("Failed to fetch proposals:", err.message);
   }
+}
 
   async function handlePropose() {
     if (!startDate || !endDate) return;

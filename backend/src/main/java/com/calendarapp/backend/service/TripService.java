@@ -2,15 +2,18 @@ package com.calendarapp.backend.service;
 
 import com.calendarapp.backend.dto.request.CreateTripRequest;
 import com.calendarapp.backend.dto.response.EventResponse;
-import com.calendarapp.backend.dto.response.ItineraryResponse;
 import com.calendarapp.backend.dto.response.TripMemberResponse;
 import com.calendarapp.backend.dto.response.TripResponse;
 import com.calendarapp.backend.dto.response.UserResponse;
+import com.calendarapp.backend.entity.Calendar;
 import com.calendarapp.backend.entity.Event;
+import com.calendarapp.backend.entity.Itinerary;
 import com.calendarapp.backend.entity.Trip;
 import com.calendarapp.backend.entity.TripMember;
 import com.calendarapp.backend.entity.User;
+import com.calendarapp.backend.repository.CalendarEventRepository;
 import com.calendarapp.backend.repository.CalendarRepository;
+import com.calendarapp.backend.repository.EventRepository;
 import com.calendarapp.backend.repository.ItineraryRepository;
 import com.calendarapp.backend.repository.TripMemberRepository;
 import com.calendarapp.backend.repository.TripRepository;
@@ -19,7 +22,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -33,6 +35,8 @@ public class TripService {
     private final TripMemberRepository tripMemberRepository;
     private final CalendarRepository calendarRepository;
     private final ItineraryRepository itineraryRepository;
+    private final EventRepository eventRepository;
+    private final CalendarEventRepository calendarEventRepository;
 
     @Transactional
     public TripResponse createTrip(String userId, CreateTripRequest request) {
@@ -50,7 +54,6 @@ public class TripService {
         trip.setInviteToken(generateInviteToken());
         trip.setStatus(Trip.Status.CONFIRMED);
 
-        // add owner as confirmed member
         TripMember ownerMember = new TripMember();
         ownerMember.setTrip(trip);
         ownerMember.setUser(owner);
@@ -142,10 +145,8 @@ public class TripService {
         member.setStatus(TripMember.Status.PENDING);
         tripMemberRepository.save(member);
 
-        // set back to PROPOSED since now waiting for responses
         trip.setStatus(Trip.Status.PROPOSED);
         tripRepository.save(trip);
-
 
         Trip reloadedTrip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new RuntimeException("Trip not found"));
@@ -189,6 +190,26 @@ public class TripService {
         TripMember member = tripMemberRepository.findByTripAndUser(trip, user)
                 .orElseThrow(() -> new RuntimeException("Not a member of this trip"));
 
+        // delete user's personal events from this trip's itineraries
+        List<Itinerary> itineraries = itineraryRepository.findByTrip(trip);
+        for (Itinerary itinerary : itineraries) {
+            List<Event> personalEvents = eventRepository.findByItineraryOrderByStartTimeAsc(itinerary)
+                    .stream()
+                    .filter(e -> e.getCreatedBy().getId().equals(userId)
+                            && e.getScope() == Event.Scope.PERSONAL)
+                    .collect(Collectors.toList());
+            eventRepository.deleteAll(personalEvents);
+        }
+
+        // delete user's calendars and their events
+        List<Calendar> userCalendars = calendarRepository.findByUser(user);
+        for (Calendar calendar : userCalendars) {
+            calendarEventRepository.deleteAll(
+                calendarEventRepository.findByCalendar(calendar)
+            );
+        }
+        calendarRepository.deleteAll(userCalendars);
+
         tripMemberRepository.delete(member);
     }
 
@@ -205,8 +226,6 @@ public class TripService {
 
         member.setStatus(TripMember.Status.valueOf(status.toUpperCase()));
         tripMemberRepository.save(member);
-        member.setStatus(TripMember.Status.valueOf(status.toUpperCase()));
-        tripMemberRepository.save(member);
 
         List<TripMember> nonOwnerMembers = trip.getMembers().stream()
                 .filter(m -> !m.getUser().getId().equals(trip.getOwner().getId()))
@@ -216,11 +235,6 @@ public class TripService {
                 .allMatch(m -> m.getStatus() == TripMember.Status.CONFIRMED
                         || m.getStatus() == TripMember.Status.REJECTED);
 
-        // if (allResponded && !nonOwnerMembers.isEmpty()) {
-        //     trip.setStatus(Trip.Status.CONFIRMED);
-        //     tripRepository.save(trip);
-        // }
-
         if (allResponded) {
             trip.setStatus(Trip.Status.CONFIRMED);
             tripRepository.save(trip);
@@ -228,11 +242,9 @@ public class TripService {
 
         Trip reloadedTrip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new RuntimeException("Trip not found"));
-        
+
         return mapToResponse(reloadedTrip, userId);
     }
-
-    // ── helpers ───────────────────────────────────────────────────────────────
 
     private String generateInviteToken() {
         return UUID.randomUUID().toString().replace("-", "").substring(0, 12);
@@ -248,25 +260,6 @@ public class TripService {
                 user.getDateOfBirth(),
                 user.getCreatedAt()
         );
-    }
-
-    private EventResponse mappingEventHelper(Event event, String itineraryId){
-
-        UserResponse createdBy = null;
-        if (event.getCreatedBy() != null) {
-                User u = event.getCreatedBy();
-                createdBy = new UserResponse(
-                        u.getId(),
-                        u.getFirstName(),
-                        u.getLastName(),
-                        u.getEmail(),
-                        u.getAvatarColor(),
-                        u.getDateOfBirth(),
-                        u.getCreatedAt()
-                );
-        }
-        
-        return new EventResponse(event.getId(), itineraryId, createdBy, event.getName(), event.getDescription(), event.getLocation(), event.getStartTime(), event.getEndTime(), event.getScope().name(), event.getStatus().name(), event.getCreatedAt());
     }
 
     private TripResponse mapToResponse(Trip trip, String currentUserId) {

@@ -60,14 +60,28 @@ export function ItineraryTab({
   }
 
   useEffect(() => {
-    if (confirmedStartDate) fetchItineraries();
+    if (!confirmedStartDate) return;
+
+    fetchItineraries();
+    const interval = setInterval(fetchItineraries, 5000);
+    return () => clearInterval(interval);
   }, [trip.id, confirmedStartDate]);
 
   async function fetchItineraries() {
     try {
-      setLoading(true);
+      setItineraries((prev) => {
+        if (prev.length === 0) setLoading(true);
+        return prev;
+      });
       const data = await getItinerariesApi(trip.id);
-      setItineraries(data);
+      // filter out personal events that don't belong to current user
+      const filtered = data.map((itinerary) => ({
+        ...itinerary,
+        events: itinerary.events.filter(
+          (e) => e.scope !== "PERSONAL" || e.createdBy?.id === currentUser?.id,
+        ),
+      }));
+      setItineraries(filtered);
     } catch (err: any) {
       console.error("Failed to fetch itineraries:", err.message);
     } finally {

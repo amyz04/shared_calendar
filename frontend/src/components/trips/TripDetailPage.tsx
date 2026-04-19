@@ -14,6 +14,7 @@ import { useTripMembers } from "../../hooks/useTripMembers";
 import type { ConfirmedRange } from "./tripUtils";
 import { useTrips } from "../../context/TripContext";
 import { getUser } from "../../api/auth";
+import { leaveTripApi } from "../../api/trip";
 import { useNavigate } from "react-router-dom";
 
 interface TripDetailPageProps {
@@ -39,9 +40,11 @@ export function TripDetailPage({
   const [confirmedRange, setConfirmedRange] = useState<ConfirmedRange | null>(null);
   const [selDay, setSelDay] = useState<number | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [leaving, setLeaving] = useState(false);
   const [tripLen, setTripLen] = useState(3);
 
-  const { deleteTrip } = useTrips();
+  const { deleteTrip, refetch } = useTrips();
   const currentUser = getUser();
   const navigate = useNavigate();
 
@@ -61,6 +64,20 @@ export function TripDetailPage({
       // ignore
     } finally {
       setShowDeleteConfirm(false);
+    }
+  }
+
+  async function confirmLeaveTrip() {
+    try {
+      setLeaving(true);
+      await leaveTripApi(trip!.id);
+      await refetch();
+      navigate("/trips");
+    } catch {
+      // ignore
+    } finally {
+      setLeaving(false);
+      setShowLeaveConfirm(false);
     }
   }
 
@@ -123,15 +140,7 @@ export function TripDetailPage({
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[999]">
           <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-7 w-[360px] flex flex-col items-center gap-4 text-center">
             <div className="w-12 h-12 rounded-full bg-red-400/10 flex items-center justify-center">
-              <svg
-                width={22}
-                height={22}
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#f87171"
-                strokeWidth={2}
-                strokeLinecap="round"
-              >
+              <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth={2} strokeLinecap="round">
                 <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" />
               </svg>
             </div>
@@ -144,8 +153,7 @@ export function TripDetailPage({
                 <span className="font-semibold text-slate-900 dark:text-slate-100">
                   {trip.name}
                 </span>
-                ? This cannot be undone and will remove the trip for all
-                members.
+                ? This cannot be undone and will remove the trip for all members.
               </p>
             </div>
             <div className="flex gap-2 w-full">
@@ -166,6 +174,55 @@ export function TripDetailPage({
         </div>
       )}
 
+      {/* Leave Confirm Modal */}
+      {showLeaveConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[999]">
+          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-7 w-[380px] flex flex-col items-center gap-4 text-center">
+            <div className="w-12 h-12 rounded-full bg-amber-400/10 flex items-center justify-center">
+              <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth={2} strokeLinecap="round">
+                <path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+              </svg>
+            </div>
+            <div>
+              <div className="text-[15px] font-bold text-slate-900 dark:text-slate-100 font-syne mb-1">
+                Leave trip?
+              </div>
+              <p className="text-[13px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                Are you sure you want to leave{" "}
+                <span className="font-semibold text-slate-900 dark:text-slate-100">
+                  {trip.name}
+                </span>? This will permanently delete:
+              </p>
+              <ul className="text-[12px] text-slate-500 dark:text-slate-400 mt-2 text-left list-none flex flex-col gap-1">
+                <li className="flex items-center gap-2">
+                  <div className="w-1 h-1 rounded-full bg-amber-400 shrink-0" />
+                  Your personal events in this trip
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="w-1 h-1 rounded-full bg-amber-400 shrink-0" />
+                  Your synced calendar data for this trip
+                </li>
+              </ul>
+            </div>
+            <div className="flex gap-2 w-full">
+              <button
+                onClick={() => setShowLeaveConfirm(false)}
+                className="flex-1 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slateate-400 text-[13px] font-semibold font-syne bg-transparent hover:border-slate-300 cursor-pointer transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmLeaveTrip}
+                disabled={leaving}
+                className="flex-1 py-2.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-[13px] font-semibold font-syne border-none cursor-pointer transition-all disabled:opacity-60"
+              >
+                {leaving ? "Leaving..." : "Leave trip"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Trip Header */}
       <div className="mb-5">
         <div className="flex items-start justify-between">
@@ -178,23 +235,25 @@ export function TripDetailPage({
               {members.length !== 1 ? "s" : ""}
             </p>
           </div>
-          {isOwner && (
+          {isOwner ? (
             <button
               onClick={() => setShowDeleteConfirm(true)}
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-400/10 border border-red-400/30 text-red-400 text-xs font-semibold font-syne hover:bg-red-400/20 cursor-pointer transition-all"
             >
-              <svg
-                width={13}
-                height={13}
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                strokeLinecap="round"
-              >
+              <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
                 <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" />
               </svg>
               Delete trip
+            </button>
+          ) : (
+            <button
+              onClick={() => setShowLeaveConfirm(true)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-amber-400/10 border border-amber-400/30 text-amber-500 text-xs font-semibold font-syne hover:bg-amber-400/20 cursor-pointer transition-all"
+            >
+              <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
+                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" />
+              </svg>
+              Leave trip
             </button>
           )}
         </div>
@@ -380,8 +439,7 @@ export function TripDetailPage({
                             <Avatar f={f} size={20} />
                             <span
                               style={{
-                                color:
-                                  blocks.length === 0 ? f.color : undefined,
+                                color: blocks.length === 0 ? f.color : undefined,
                               }}
                               className={`text-xs flex-1 font-syne ${blocks.length === 0 ? "font-semibold" : "text-slate-500 dark:text-slate-400"}`}
                             >
