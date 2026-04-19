@@ -36,6 +36,8 @@ export function DateProposalSection({
 
   useEffect(() => {
     fetchProposals();
+    const interval = setInterval(fetchProposals, 2000);
+    return () => clearInterval(interval);
   }, [trip.id]);
 
   async function fetchProposals() {
@@ -51,6 +53,16 @@ export function DateProposalSection({
 
   async function handlePropose() {
     if (!startDate || !endDate) return;
+
+    // check for duplicate
+    const isDuplicate = proposals.some(
+      (p) => p.startDate === startDate && p.endDate === endDate,
+    );
+    if (isDuplicate) {
+      setError("These dates have already been proposed. Please choose different dates.");
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -265,6 +277,8 @@ export function DateProposalSection({
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
+                  min={`${trip.year}-${String(trip.month + 1).padStart(2, "0")}-01`}
+                  max={`${trip.year}-${String(trip.month + 1).padStart(2, "0")}-${new Date(trip.year, trip.month + 1, 0).getDate()}`}
                   className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-[13px] text-slate-900 dark:text-slate-100 font-syne"
                 />
               </div>
@@ -276,7 +290,8 @@ export function DateProposalSection({
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  min={startDate}
+                  min={startDate || `${trip.year}-${String(trip.month + 1).padStart(2, "0")}-01`}
+                  max={`${trip.year}-${String(trip.month + 1).padStart(2, "0")}-${new Date(trip.year, trip.month + 1, 0).getDate()}`}
                   className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-[13px] text-slate-900 dark:text-slate-100 font-syne"
                 />
               </div>
