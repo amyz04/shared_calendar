@@ -46,8 +46,8 @@ export function TripProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (isAuthenticated) {
       fetchTrips();
-      const interval = setInterval(fetchTrips, 2000);
-      return () => clearInterval(interval);
+      // const interval = setInterval(fetchTrips, 2000);
+      // return () => clearInterval(interval);
     } else {
       setTrips([]);
       setActiveTripId(null);
