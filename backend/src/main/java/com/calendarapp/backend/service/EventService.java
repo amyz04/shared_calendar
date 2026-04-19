@@ -2,6 +2,7 @@ package com.calendarapp.backend.service;
 
 import com.calendarapp.backend.dto.request.CreateEventRequest;
 import com.calendarapp.backend.dto.response.EventResponse;
+import com.calendarapp.backend.dto.response.UserResponse;
 import com.calendarapp.backend.entity.Event;
 import com.calendarapp.backend.entity.Itinerary;
 import com.calendarapp.backend.entity.User;
@@ -73,10 +74,24 @@ public class EventService {
     }
 
     private EventResponse mapToResponse(Event event) {
+
+        UserResponse createdBy = null;
+        if (event.getCreatedBy() != null) {
+            User u = event.getCreatedBy();
+            createdBy = new UserResponse(
+                    u.getId(),
+                    u.getFirstName(),
+                    u.getLastName(),
+                    u.getEmail(),
+                    u.getAvatarColor(),
+                    u.getDateOfBirth(),
+                    u.getCreatedAt()
+            );
+        }
         return new EventResponse(
                 event.getId(),
                 event.getItinerary().getId(),
-                event.getCreatedBy().getId(),
+                createdBy,
                 event.getName(),
                 event.getDescription(),
                 event.getLocation(),

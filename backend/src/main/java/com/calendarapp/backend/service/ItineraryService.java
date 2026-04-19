@@ -3,6 +3,7 @@ package com.calendarapp.backend.service;
 import com.calendarapp.backend.dto.request.CreateEventRequest;
 import com.calendarapp.backend.dto.response.EventResponse;
 import com.calendarapp.backend.dto.response.ItineraryResponse;
+import com.calendarapp.backend.dto.response.UserResponse;
 import com.calendarapp.backend.entity.Event;
 import com.calendarapp.backend.entity.Itinerary;
 import com.calendarapp.backend.entity.Trip;
@@ -96,6 +97,11 @@ public class ItineraryService {
             throw new RuntimeException("Event does not belong to this itinerary");
         }
 
+        // only the creator can edit
+        if (!event.getCreatedBy().getId().equals(userId)) {
+                throw new RuntimeException("Only the event creator can edit this event");
+        }
+
         if (request.getName() != null) event.setName(request.getName());
         if (request.getDescription() != null) event.setDescription(request.getDescription());
         if (request.getLocation() != null) event.setLocation(request.getLocation());
@@ -125,8 +131,22 @@ public class ItineraryService {
     // ── helpers ───────────────────────────────────────────────────────────────
 
     private EventResponse mapEventToResponse(Event event, String itineraryId) {
+
+        UserResponse createdBy = null;
+        if (event.getCreatedBy() != null) {
+                User u = event.getCreatedBy();
+                createdBy = new UserResponse(
+                        u.getId(),
+                        u.getFirstName(),
+                        u.getLastName(),
+                        u.getEmail(),
+                        u.getAvatarColor(),
+                        u.getDateOfBirth(),
+                        u.getCreatedAt()
+                );
+        }
         return new EventResponse(
-                event.getId(), itineraryId, event.getCreatedBy().getId(), event.getName(), event.getDescription(), event.getLocation(), event.getStartTime(), event.getEndTime(), event.getScope().name(), event.getStatus().name(), event.getCreatedAt()
+                event.getId(), itineraryId, createdBy, event.getName(), event.getDescription(), event.getLocation(), event.getStartTime(), event.getEndTime(), event.getScope().name(), event.getStatus().name(), event.getCreatedAt()
         );
     }
 

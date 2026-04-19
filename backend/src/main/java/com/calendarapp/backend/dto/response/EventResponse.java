@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 public class EventResponse {
     private String id;
     private String itineraryId;
-    private String createdBy;
+    private UserResponse createdBy;
     private String name;
     private String description;
     private String location;

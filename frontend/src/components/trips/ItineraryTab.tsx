@@ -8,6 +8,7 @@ import {
 } from "../../api/itineraries";
 import { MONTHS } from "../../data";
 import { inputCls } from "../ui/inputStyle";
+import { getUser } from "../../api/auth";
 
 interface ItineraryTabProps {
   trip: Trip;
@@ -45,6 +46,18 @@ export function ItineraryTab({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [scope, setScope] = useState<"GROUP" | "PERSONAL">("GROUP");
+  const [readOnlyEvent, setReadOnlyEvent] = useState<TripEvent | null>(null);
+  const currentUser = getUser();
+
+  function isEventOwner(event: TripEvent): boolean {
+    return currentUser?.id === event.createdBy?.id;
+  }
+
+  function openReadOnly(event: TripEvent) {
+    setReadOnlyEvent(event);
+    setEditingEvent(null);
+    setShowForm(false);
+  }
 
   useEffect(() => {
     if (confirmedStartDate) fetchItineraries();
@@ -148,6 +161,7 @@ export function ItineraryTab({
   }
 
   function openEdit(event: TripEvent) {
+    if (!isEventOwner(event)) return;
     setEditingEvent(event);
     setForm({
       name: event.name,
@@ -298,44 +312,62 @@ export function ItineraryTab({
                   .sort((a, b) =>
                     (a.startTime ?? "").localeCompare(b.startTime ?? ""),
                   )
-                  .map((event) => (
-                    <div
-                      key={event.id}
-                      onClick={() => openEdit(event)}
-                      className="px-5 py-3.5 flex items-center gap-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-all"
-                    >
-                      <div className="w-1.5 h-1.5 rounded-full bg-violet-500 shrink-0 mt-0.5" />
-                      <div className="flex-1">
-                        <div className="text-[13px] font-semibold text-slate-900 dark:text-slate-100 font-syne">
-                          {event.name}
-                        </div>
-                        {(event.startTime || event.location) && (
-                          <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-2 mt-0.5">
-                            {event.startTime && (
-                              <span>
-                                {formatTime(event.startTime)}
-                                {event.endTime
-                                  ? ` – ${formatTime(event.endTime)}`
-                                  : ""}
+                  .map((event) => {
+                    const canEdit = isEventOwner(event);
+                    return (
+                      <div
+                        key={event.id}
+                        onClick={() =>
+                          canEdit ? openEdit(event) : openReadOnly(event)
+                        }
+                        className="px-5 py-3.5 flex items-center gap-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-all"
+                      >
+                        <div className="w-1.5 h-1.5 rounded-full bg-violet-500 shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <div className="text-[13px] font-semibold text-slate-900 dark:text-slate-100 font-syne">
+                              {event.name}
+                            </div>
+                            {!canEdit && (
+                              <span className="text-[10px] text-slate-400 font-syne px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700">
+                                {event.createdBy?.firstName}'s event
                               </span>
                             )}
-                            {event.location && <span>· {event.location}</span>}
                           </div>
-                        )}
+                          {(event.startTime || event.location) && (
+                            <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-2 mt-0.5">
+                              {event.startTime && (
+                                <span>
+                                  {formatTime(event.startTime)}
+                                  {event.endTime
+                                    ? ` – ${formatTime(event.endTime)}`
+                                    : ""}
+                                </span>
+                              )}
+                              {event.location && (
+                                <span>· {event.location}</span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        <svg
+                          width={14}
+                          height={14}
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke={canEdit ? "#8b5cf6" : "#94a3b8"}
+                          strokeWidth={1.5}
+                          strokeLinecap="round"
+                        >
+                          {canEdit ? (
+                            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                          ) : (
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                          )}
+                        </svg>
                       </div>
-                      <svg
-                        width={14}
-                        height={14}
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="#94a3b8"
-                        strokeWidth={1.5}
-                        strokeLinecap="round"
-                      >
-                        <path d="M9 18l6-6-6-6" />
-                      </svg>
-                    </div>
-                  ))}
+                    );
+                  })}
               </div>
             )}
           </div>
@@ -482,6 +514,74 @@ export function ItineraryTab({
                     Delete event
                   </button>
                 )}
+              </div>
+            </div>
+          ) : readOnlyEvent ? (
+            <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                <div className="text-sm font-bold text-slate-900 dark:text-slate-100 font-syne">
+                  Event details
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] text-slate-400 font-syne px-2 py-1 rounded-full bg-slate-100 dark:bg-slate-700">
+                    read only
+                  </span>
+                  <button
+                    onClick={() => setReadOnlyEvent(null)}
+                    className="bg-transparent border-none text-slate-400 cursor-pointer text-lg leading-none"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+              <div className="p-5 flex flex-col gap-3">
+                <div>
+                  <div className="text-[11px] text-slate-400 font-syne mb-1">
+                    Event
+                  </div>
+                  <div className="text-[14px] font-semibold text-slate-900 dark:text-slate-100 font-syne">
+                    {readOnlyEvent.name}
+                  </div>
+                </div>
+                {readOnlyEvent.location && (
+                  <div>
+                    <div className="text-[11px] text-slate-400 font-syne mb-1">
+                      Location
+                    </div>
+                    <div className="text-[13px] text-slate-700 dark:text-slate-300 font-syne">
+                      {readOnlyEvent.location}
+                    </div>
+                  </div>
+                )}
+                {(readOnlyEvent.startTime || readOnlyEvent.endTime) && (
+                  <div>
+                    <div className="text-[11px] text-slate-400 font-syne mb-1">
+                      Time
+                    </div>
+                    <div className="text-[13px] text-slate-700 dark:text-slate-300 font-syne">
+                      {formatTime(readOnlyEvent.startTime)}
+                      {readOnlyEvent.endTime
+                        ? ` – ${formatTime(readOnlyEvent.endTime)}`
+                        : ""}
+                    </div>
+                  </div>
+                )}
+                {readOnlyEvent.description && (
+                  <div>
+                    <div className="text-[11px] text-slate-400 font-syne mb-1">
+                      Notes
+                    </div>
+                    <div className="text-[13px] text-slate-700 dark:text-slate-300 font-syne leading-relaxed">
+                      {readOnlyEvent.description}
+                    </div>
+                  </div>
+                )}
+                <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
+                  <div className="text-[11px] text-slate-400 font-syne">
+                    Added by {readOnlyEvent.createdBy?.firstName}{" "}
+                    {readOnlyEvent.createdBy?.lastName}
+                  </div>
+                </div>
               </div>
             </div>
           ) : (
