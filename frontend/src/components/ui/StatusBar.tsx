@@ -23,12 +23,6 @@ export function StatusBar({ isGuest, loading }: StatusBarProps) {
           Guest mode
         </div>
       )}
-      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[11px] text-slate-500 dark:text-slate-400 font-syne">
-        <div
-          className={`w-1.5 h-1.5 rounded-full ${loading ? "bg-amber-400" : "bg-green-400"}`}
-        />
-        Spring Boot · {loading ? "loading..." : "connected"}
-      </div>
     </div>
   );
 }

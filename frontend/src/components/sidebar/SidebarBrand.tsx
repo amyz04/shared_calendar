@@ -23,7 +23,7 @@ export function SidebarBrand({ isDark, toggleTheme }: SidebarBrandProps) {
           </svg>
         </div>
         <span className="text-base font-bold text-slate-900 dark:text-slate-100 font-syne tracking-tight">
-          voyage
+          GYST
         </span>
       </div>
       <ThemeToggle isDark={isDark} toggle={toggleTheme} />
